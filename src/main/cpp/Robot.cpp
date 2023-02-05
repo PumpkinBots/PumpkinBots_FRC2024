@@ -43,6 +43,8 @@ class Robot : public frc::TimedRobot
 public:
   Robot()
   {
+    navx = new AHRS(frc::SPI::Port::kMXP);
+
     //navx = new AHRS(SerialPort::kMXP);
 
     //m_robotDrive.SetExpiration(100_ms);
@@ -132,6 +134,7 @@ public:
     m_leftFollower.Follow(m_leftLeader);
     m_rightFollower.Follow(m_rightLeader);    
 
+    fmt::print("speed={}\n", xAxisRate);
 
   }
 
@@ -139,7 +142,6 @@ public:
   {
     //m_robotDrive.StopMotor();
     m_turnRateLimiter.Reset(0);
-    navx = new AHRS(frc::SPI::Port::kMXP);
 
   }
 

@@ -38,6 +38,7 @@ public:
 private:
     bool m_runGrabberIntakeIn = false;
     bool m_runGrabberIntakeOut = false;
+    const int kEncoderCountsPerRev = 2048;
     // Non-owning reference to the motor controller.
     TalonSRX& m_GrabberIntake;
     // Non-owning reference to the joystick.

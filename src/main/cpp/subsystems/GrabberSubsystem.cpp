@@ -12,7 +12,13 @@ GrabberSubsystem::GrabberSubsystem(
   m_runGrabberIntakeIn(false),
   m_runGrabberIntakeOut(false),
   m_GrabberIntake{GrabberIntake},
-  m_xbox{stick}
+  m_GrabberAngle{GrabberAngle},
+  m_xbox{stick},
+  m_EncoderCountsPerRev(2048),
+  m_Position1(600),
+  m_Position2(1200),
+  m_Position3(1800),
+  m_Counter(0)
 {
 }
 
@@ -76,6 +82,21 @@ bool GrabberSubsystem::RunPeriodic()
       m_GrabberIntake.Set(ControlMode::PercentOutput, -0.5);
     } else {
       m_GrabberIntake.Set(ControlMode::PercentOutput, 0);
+    }
+
+    if (m_xbox.GetXButtonPressed())
+    {
+      m_Counter = m_Counter + 1;
+    }
+    if (m_Counter % 3 == 1)
+    {
+      m_GrabberAngle.Set(ControlMode::Position, m_Position1);
+    } else if (m_Counter % 3 == 2)
+    {
+      m_GrabberAngle.Set(ControlMode::Position, m_Position2);
+    } else 
+    {
+      m_GrabberAngle.Set(ControlMode::Position, m_Position3);
     }
     // periodically read voltage, temperature, and applied output and publish to SmartDashboard
     //return m_runGrabberIntake;

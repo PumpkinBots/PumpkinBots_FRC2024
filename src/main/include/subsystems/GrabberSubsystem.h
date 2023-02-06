@@ -38,9 +38,15 @@ public:
 private:
     bool m_runGrabberIntakeIn = false;
     bool m_runGrabberIntakeOut = false;
-    const int kEncoderCountsPerRev = 2048;
+    const int m_EncoderCountsPerRev = 2048;
+    const int m_Position1 = 600;
+    const int m_Position2 = 1200;
+    const int m_Position3 = 1800;
+    int m_Counter = 4;
     // Non-owning reference to the motor controller.
     TalonSRX& m_GrabberIntake;
+    TalonSRX& m_GrabberAngle;
+
     // Non-owning reference to the joystick.
     frc::XboxController& m_xbox;
 

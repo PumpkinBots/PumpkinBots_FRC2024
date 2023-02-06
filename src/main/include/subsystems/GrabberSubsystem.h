@@ -36,7 +36,8 @@ public:
 public:
 
 private:
-    bool m_runGrabberIntake = false;
+    bool m_runGrabberIntakeIn = false;
+    bool m_runGrabberIntakeOut = false;
     // Non-owning reference to the motor controller.
     TalonSRX& m_GrabberIntake;
     // Non-owning reference to the joystick.

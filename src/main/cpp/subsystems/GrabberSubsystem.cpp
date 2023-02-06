@@ -9,7 +9,8 @@ GrabberSubsystem::GrabberSubsystem(
   TalonSRX& GrabberAngle,
   frc::XboxController& stick
 ) :
-  m_runGrabberIntake(false),
+  m_runGrabberIntakeIn(false),
+  m_runGrabberIntakeOut(false),
   m_GrabberIntake{GrabberIntake},
   m_xbox{stick}
 {
@@ -53,26 +54,37 @@ bool GrabberSubsystem::RunPeriodic()
     // Toggle Launch state on button press.
     if (m_xbox.GetAButtonPressed())
     {
-      m_runGrabberIntake = !m_runGrabberIntake;
+      m_runGrabberIntakeIn = !m_runGrabberIntakeIn;
     }
+    if (m_xbox.GetBButtonPressed())
+    {
+      m_runGrabberIntakeOut = !m_runGrabberIntakeOut;
+    }
+
     // 
-    if (m_runGrabberIntake)
+    if (m_runGrabberIntakeIn)
     {
     // Throttle is connected the slider on the controller.
     // The throttle axis reads -1.0 when pressed forward.
     // Launch motor is inverted from launch motor.
+      m_runGrabberIntakeOut = false;
       m_GrabberIntake.Set(ControlMode::PercentOutput, 0.5);
 
+    } else if (m_runGrabberIntakeOut)
+    {
+      m_runGrabberIntakeIn = false;
+      m_GrabberIntake.Set(ControlMode::PercentOutput, -0.5);
     } else {
       m_GrabberIntake.Set(ControlMode::PercentOutput, 0);
     }
     // periodically read voltage, temperature, and applied output and publish to SmartDashboard
-    return m_runGrabberIntake;
+    //return m_runGrabberIntake;
 }
 
 
 void GrabberSubsystem::StopMotor()
 {
-    m_runGrabberIntake = false;
+    m_runGrabberIntakeIn = false;
+    m_runGrabberIntakeOut = false;
     m_GrabberIntake.Set(ControlMode::PercentOutput, 0);
 }

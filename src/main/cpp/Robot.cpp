@@ -20,6 +20,7 @@
 #include "rev/CANSparkMax.h"
 #include "Constants.h"
 
+#include "subsystems/GrabberSubsystem.h"
 
 #include "networktables/NetworkTable.h"
 #include "frc/smartdashboard/SmartDashboard.h"
@@ -54,58 +55,19 @@ public:
     m_testDrives.push_back(&m_leftFollower);
     m_testDrives.push_back(&m_rightLeader);
     m_testDrives.push_back(&m_rightFollower);
+  */
   }
 
   void RobotInit() override {
-    // Initialize drive motors
-    m_leftLeader.RestoreFactoryDefaults();
-    m_leftFollower.RestoreFactoryDefaults();
-    m_rightLeader.RestoreFactoryDefaults();
-    m_rightFollower.RestoreFactoryDefaults();
-    */
-    // Set followers
-    //m_leftFollower.Follow(m_leftLeader);
-    //m_rightFollower.Follow(m_rightLeader);
 
-    /*
-    // Read the build version from the deploy directory.
-    // https://docs.wpilib.org/en/stable/docs/software/advanced-gradlerio/deploy-git-data.html
-    std::string deployDir = frc::filesystem::GetDeployDirectory();
-    std::ifstream branchFile(deployDir + "/branch.txt");
-    std::string branchStr;
-    branchFile >> branchStr;  // This should suck up the whole file into the string.
-    fmt::print("Branch: {}\n", branchStr.c_str());  // This prints to the console.
-    std::ifstream commitFile(deployDir + "/commit.txt");
-    std::string commitStr;
-    commitFile >> commitStr;  // This should suck up the whole file into the string.
-    fmt::print("Commit: {}\n", commitStr.c_str());
+    m_grabber.RobotInit();
 
-    // Format the displayed version using an sstream.
-    std::ostringstream buildVersStream;
-    buildVersStream << "Branch: " << branchStr << " Commit: " << commitStr;
-    m_buildVersion = buildVersStream.str();
-
-    fmt::print("Formated m_buildVersion: |{}|\n",  m_buildVersion);
-    frc::SmartDashboard::PutString("Robot Code Version", m_buildVersion);
-
-    std::string gitVersion = GetRobotVersion();
-    fmt::print("Version: {}\n", gitVersion);
-    frc::SmartDashboard::PutString("Robot Code Git Version", gitVersion);
-
-    std::string buildInfo = GetBuildInfo();
-    fmt::print("Build Info: {}\n", buildInfo);
-    frc::SmartDashboard::PutString("Robot Build Info", buildInfo);
-    */
-
-   
   }
 
   void AutonomousInit() override
   {
-    //m_robotDrive.StopMotor();
+    m_grabber.ModeInit();
 
-    m_timer.Reset();
-    m_timer.Start();
   }
 
   void AutonomousPeriodic() override
@@ -142,6 +104,7 @@ public:
   {
     //m_robotDrive.StopMotor();
     m_turnRateLimiter.Reset(0);
+    m_grabber.ModeInit();
 
   }
 
@@ -188,6 +151,9 @@ public:
 
     //double yaw = navx->GetYaw();
     //fmt::print("pitch={}\n", navx->GetPitch());
+
+    m_grabber.RunPeriodic();
+
   
   }
 
@@ -252,6 +218,12 @@ private:
   constexpr static const double kOnBalanceThresholdDegrees  = 5.0f;
   bool autoBalanceXMode = false;
   bool autoBalanceYMode = false;
+
+  TalonSRX m_GrabberIntake = {kGrabberIntakeID};
+  TalonSRX m_GrabberAngle = {kGrabberAngleID};
+
+  GrabberSubsystem m_grabber{m_GrabberIntake, m_GrabberAngle, m_xbox};
+
 
   // Allow the robot to access the data from the camera. 
   std::shared_ptr<nt::NetworkTable> table = nt::NetworkTableInstance::GetDefault().GetTable("limelight");

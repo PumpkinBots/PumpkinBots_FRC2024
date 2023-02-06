@@ -26,3 +26,6 @@ static constexpr int kDriveLeftLeader = 1;
 static constexpr int kDriveLeftFollower = 4;
 static constexpr int kDriveRightLeader = 2;
 static constexpr int kDriveRightFollower = 9;
+
+static constexpr int kGrabberIntakeID = 3;
+static constexpr int kGrabberAngleID = 5;

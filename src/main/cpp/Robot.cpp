@@ -72,7 +72,8 @@ public:
 
   void AutonomousPeriodic() override
   {
-    double xAxisRate          = m_stick.GetX();
+
+    double xAxisRate          = 0;
     double rollAngleDegrees  = navx->GetRoll();
 
     if ( !autoBalanceXMode &&
@@ -104,7 +105,7 @@ public:
   {
     //m_robotDrive.StopMotor();
     m_turnRateLimiter.Reset(0);
-    //m_grabber.ModeInit();
+    m_grabber.ModeInit();
 
   }
 
@@ -143,6 +144,35 @@ public:
       m_rightFollower.Follow(m_rightLeader);
     }
 
+    if (m_stick.GetRawButtonPressed(4)){
+      m_teleopBalance = !m_teleopBalance;
+    }
+
+    if (m_teleopBalance){
+          double xAxisRate          = 0;
+          double rollAngleDegrees  = navx->GetRoll();
+
+          if ( !autoBalanceXMode &&
+              (fabs(rollAngleDegrees) >=
+              fabs(kOffBalanceThresholdDegrees))) {
+            autoBalanceXMode = true;
+          }
+          else if ( autoBalanceXMode &&
+              (fabs(rollAngleDegrees) <=
+              fabs(kOnBalanceThresholdDegrees))) {
+            autoBalanceXMode = false;
+          }
+
+          if ( autoBalanceXMode ) {
+            double rollAngleRadians = rollAngleDegrees * (M_PI / 180.0);
+            xAxisRate = sin(rollAngleRadians) * -1;
+          }
+
+          m_leftLeader.Set(ControlMode::PercentOutput, (0.6)*xAxisRate);
+          m_rightLeader.Set(ControlMode::PercentOutput,-(0.6)*xAxisRate);
+          m_leftFollower.Follow(m_leftLeader);
+          m_rightFollower.Follow(m_rightLeader);
+    }
 
     //console output
     
@@ -198,6 +228,7 @@ private:
 
   std::string m_buildVersion;
   bool m_slowDrive = false;
+  bool m_teleopBalance = false;
   //Talon drive motors
   TalonSRX m_leftLeader = {kDriveLeftLeader};
   TalonSRX m_leftFollower = {kDriveLeftFollower};
@@ -222,7 +253,7 @@ private:
   TalonSRX m_GrabberIntake = {kGrabberIntakeID};
   TalonSRX m_GrabberAngle = {kGrabberAngleID};
 
-  //GrabberSubsystem m_grabber{m_GrabberIntake, m_GrabberAngle, m_xbox};
+  GrabberSubsystem m_grabber{m_GrabberIntake, m_GrabberAngle, m_xbox};
 
 
   // Allow the robot to access the data from the camera. 

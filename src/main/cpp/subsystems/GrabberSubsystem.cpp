@@ -37,24 +37,6 @@ void GrabberSubsystem::RobotInit()
 
 }
 
-//bool GrabberSubsystem::RunAutonomous(bool enabled)
-/*
-{
-
-  if (enabled)
-  {
-    // m_launchDrive.Set(-m_stick.GetThrottle());
-    // Super-awesome calibration.
-    m_GrabberIntake.Set(0.687);
-    // normal flywheel speed = 0.687
-  } else {
-    m_GrabberIntake.Set(0);
-  }
-
-    // periodically read voltage, temperature, and applied output and publish to SmartDashboard
-    return enabled;
-}
-*/
 bool GrabberSubsystem::RunPeriodic()
 {
     // Toggle Launch state on button press.

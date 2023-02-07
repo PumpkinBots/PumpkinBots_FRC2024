@@ -111,39 +111,6 @@ public:
 
   void TeleopPeriodic() override
   {
-    // Y-axis is negative pushed forward, and now the drive forward
-    // is also negative. However invert the twist input.
-
-    //These two lines are for different motors, keep them commented out.
-    //m_robotDrive.ArcadeDrive(m_stick.GetY(), m_turnRateLimiter.Calculate(-m_stick.GetTwist()), true);
-    //m_robotDrive.ArcadeDrive(m_stick.GetY(), (0.5)*-m_stick.GetTwist(), false);
-    
-    //Button three on the joystick toggles "slow drive" mode.
-    //In this mode, the robot's drive and turn speed are limited to 30%.
-    if (m_stick.GetRawButtonPressed(3)){
-      m_slowDrive = !m_slowDrive;
-    }
-
-    const double deadband = 0.05;
-    double speed = m_stick.GetY();
-    double turn = m_turnRateLimiter.Calculate(m_stick.GetTwist());
-
-    if (fabs(speed) < deadband) {
-      speed = 0.0;
-    }
-    
-    if (m_slowDrive){
-      m_leftLeader.Set(ControlMode::PercentOutput, -(0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, (0.3)*turn);
-      m_rightLeader.Set(ControlMode::PercentOutput, (0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, (0.3)*turn);
-      m_leftFollower.Follow(m_leftLeader);
-      m_rightFollower.Follow(m_rightLeader);
-    } else {
-      m_leftLeader.Set(ControlMode::PercentOutput, -speed, DemandType::DemandType_ArbitraryFeedForward, turn);
-      m_rightLeader.Set(ControlMode::PercentOutput, speed, DemandType::DemandType_ArbitraryFeedForward, turn);
-      m_leftFollower.Follow(m_leftLeader);
-      m_rightFollower.Follow(m_rightLeader);
-    }
-
     if (m_stick.GetRawButtonPressed(4)){
       m_teleopBalance = !m_teleopBalance;
     }
@@ -173,6 +140,34 @@ public:
           m_leftFollower.Follow(m_leftLeader);
           m_rightFollower.Follow(m_rightLeader);
     }
+    
+    //Button three on the joystick toggles "slow drive" mode.
+    //In this mode, the robot's drive and turn speed are limited to 30%.
+    if (m_stick.GetRawButtonPressed(3)){
+      m_slowDrive = !m_slowDrive;
+    }
+
+    const double deadband = 0.05;
+    double speed = m_stick.GetY();
+    double turn = m_turnRateLimiter.Calculate(m_stick.GetTwist());
+
+    if (fabs(speed) < deadband || m_teleopBalance) {
+      speed = 0.0;
+    }
+    
+    if (m_slowDrive){
+      m_leftLeader.Set(ControlMode::PercentOutput, -(0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, (0.3)*turn);
+      m_rightLeader.Set(ControlMode::PercentOutput, (0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, (0.3)*turn);
+      m_leftFollower.Follow(m_leftLeader);
+      m_rightFollower.Follow(m_rightLeader);
+    } else {
+      m_leftLeader.Set(ControlMode::PercentOutput, -speed, DemandType::DemandType_ArbitraryFeedForward, turn);
+      m_rightLeader.Set(ControlMode::PercentOutput, speed, DemandType::DemandType_ArbitraryFeedForward, turn);
+      m_leftFollower.Follow(m_leftLeader);
+      m_rightFollower.Follow(m_rightLeader);
+    }
+
+
 
     //console output
     

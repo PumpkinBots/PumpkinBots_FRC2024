@@ -60,43 +60,43 @@ public:
 
   void RobotInit() override {
 
-    m_grabber.RobotInit();
+    //m_grabber.RobotInit();
 
   }
 
   void AutonomousInit() override
   {
-    m_grabber.ModeInit();
+    //m_grabber.ModeInit();
 
   }
 
   void AutonomousPeriodic() override
   {
     double xAxisRate          = m_stick.GetX();
-    double pitchAngleDegrees  = navx->GetPitch();
+    double rollAngleDegrees  = navx->GetRoll();
 
     if ( !autoBalanceXMode &&
-        (fabs(pitchAngleDegrees) >=
+        (fabs(rollAngleDegrees) >=
         fabs(kOffBalanceThresholdDegrees))) {
       autoBalanceXMode = true;
     }
     else if ( autoBalanceXMode &&
-        (fabs(pitchAngleDegrees) <=
+        (fabs(rollAngleDegrees) <=
         fabs(kOnBalanceThresholdDegrees))) {
       autoBalanceXMode = false;
     }
 
     if ( autoBalanceXMode ) {
-      double pitchAngleRadians = pitchAngleDegrees * (M_PI / 180.0);
-      xAxisRate = sin(pitchAngleRadians) * -1;
+      double rollAngleRadians = rollAngleDegrees * (M_PI / 180.0);
+      xAxisRate = sin(rollAngleRadians) * -1;
     }
 
-    m_leftLeader.Set(ControlMode::PercentOutput, -xAxisRate);
-    m_rightLeader.Set(ControlMode::PercentOutput, xAxisRate);
+    m_leftLeader.Set(ControlMode::PercentOutput, (0.6)*xAxisRate);
+    m_rightLeader.Set(ControlMode::PercentOutput,-(0.6)*xAxisRate);
     m_leftFollower.Follow(m_leftLeader);
     m_rightFollower.Follow(m_rightLeader);    
 
-    fmt::print("speed={}\n", xAxisRate);
+    //fmt::print("speed={}\n", xAxisRate);
 
   }
 
@@ -104,7 +104,7 @@ public:
   {
     //m_robotDrive.StopMotor();
     m_turnRateLimiter.Reset(0);
-    m_grabber.ModeInit();
+    //m_grabber.ModeInit();
 
   }
 
@@ -152,7 +152,7 @@ public:
     //double yaw = navx->GetYaw();
     //fmt::print("pitch={}\n", navx->GetPitch());
 
-    m_grabber.RunPeriodic();
+    //m_grabber.RunPeriodic();
 
   
   }
@@ -222,7 +222,7 @@ private:
   TalonSRX m_GrabberIntake = {kGrabberIntakeID};
   TalonSRX m_GrabberAngle = {kGrabberAngleID};
 
-  GrabberSubsystem m_grabber{m_GrabberIntake, m_GrabberAngle, m_xbox};
+  //GrabberSubsystem m_grabber{m_GrabberIntake, m_GrabberAngle, m_xbox};
 
 
   // Allow the robot to access the data from the camera. 

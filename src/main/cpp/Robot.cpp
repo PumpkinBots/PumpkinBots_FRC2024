@@ -122,11 +122,57 @@ public:
       m_teleopBalance = !m_teleopBalance;
     }
 
-    while (m_teleopBalance){
 
-      if (m_stick.GetRawButtonPressed(4)){
-        m_teleopBalance = !m_teleopBalance;
-      }
+    //______________________________________________________________________________
+    //DRIVE SYSTEM
+
+    //Button three on the joystick toggles "slow drive" mode.
+    //In this mode, the robot's drive and turn speed are limited to 30%.
+    if (m_stick.GetRawButtonPressed(3)){
+      m_slowDrive = !m_slowDrive;
+    }
+
+    //deadband value of 0.05, throw out any inputs less than that value
+    const double deadband = 0.05;
+    double speed = m_stick.GetY();
+    double turn = m_turnRateLimiter.Calculate(m_stick.GetTwist());
+
+    if (fabs(speed) < deadband) {
+      speed = 0.0;
+    }
+
+    if (m_teleopBalance){
+      speed = 0.0;
+      turn = 0.0;
+
+    }
+    
+    if (m_slowDrive){
+      m_leftLeader.Set(ControlMode::PercentOutput, -(0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, (0.3)*turn);
+      m_rightLeader.Set(ControlMode::PercentOutput, (0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, (0.3)*turn);
+      m_leftFollower.Follow(m_leftLeader);
+      m_rightFollower.Follow(m_rightLeader);
+    } else {
+      m_leftLeader.Set(ControlMode::PercentOutput, -speed, DemandType::DemandType_ArbitraryFeedForward, turn);
+      m_rightLeader.Set(ControlMode::PercentOutput, speed, DemandType::DemandType_ArbitraryFeedForward, turn);
+      m_leftFollower.Follow(m_leftLeader);
+      m_rightFollower.Follow(m_rightLeader);
+    }
+    //_____________________________________________________________________________
+    //Arm System
+    if (m_xbox.GetYButtonPressed()){
+
+      armFront = !armFront;
+    
+    }
+    if (armFront){
+      //m_ArmRetract.GetEncoder().SetPosition(21);
+    } else {
+      //m_ArmRetract.GetEncoder().SetPosition(0);
+
+    }
+
+    if (m_teleopBalance){
 
           double xAxisRate          = 0;
           double rollAngleDegrees  = navx->GetRoll();
@@ -151,47 +197,6 @@ public:
           m_rightLeader.Set(ControlMode::PercentOutput,-(0.6)*xAxisRate);
           m_leftFollower.Follow(m_leftLeader);
           m_rightFollower.Follow(m_rightLeader);
-    }
-    //______________________________________________________________________________
-    //DRIVE SYSTEM
-
-    //Button three on the joystick toggles "slow drive" mode.
-    //In this mode, the robot's drive and turn speed are limited to 30%.
-    if (m_stick.GetRawButtonPressed(3)){
-      m_slowDrive = !m_slowDrive;
-    }
-
-    //deadband value of 0.05, throw out any inputs less than that value
-    const double deadband = 0.05;
-    double speed = m_stick.GetY();
-    double turn = m_turnRateLimiter.Calculate(m_stick.GetTwist());
-
-    if (fabs(speed) < deadband) {
-      speed = 0.0;
-    }
-    
-    if (m_slowDrive){
-      m_leftLeader.Set(ControlMode::PercentOutput, -(0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, (0.3)*turn);
-      m_rightLeader.Set(ControlMode::PercentOutput, (0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, (0.3)*turn);
-      m_leftFollower.Follow(m_leftLeader);
-      m_rightFollower.Follow(m_rightLeader);
-    } else {
-      m_leftLeader.Set(ControlMode::PercentOutput, -speed, DemandType::DemandType_ArbitraryFeedForward, turn);
-      m_rightLeader.Set(ControlMode::PercentOutput, speed, DemandType::DemandType_ArbitraryFeedForward, turn);
-      m_leftFollower.Follow(m_leftLeader);
-      m_rightFollower.Follow(m_rightLeader);
-    }
-    //_____________________________________________________________________________
-    //Arm System
-    if (m_xbox.GetYButtonPressed()){
-
-      armFront = !armFront;
-    
-    }
-    if (armFront){
-      m_ArmRetract.GetEncoder().SetPosition(21);
-    } else {
-      m_ArmRetract.GetEncoder().SetPosition(0);
 
     }
 
@@ -204,6 +209,7 @@ public:
     //fmt::print("pitch={}\n", navx->GetPitch());
 
     //m_grabber.RunPeriodic();
+    fmt::print("Roll={}\n", navx->GetRoll());
 
   
   }

@@ -115,7 +115,12 @@ public:
       m_teleopBalance = !m_teleopBalance;
     }
 
-    if (m_teleopBalance){
+    while (m_teleopBalance){
+
+      if (m_stick.GetRawButtonPressed(4)){
+        m_teleopBalance = !m_teleopBalance;
+      }
+
           double xAxisRate          = 0;
           double rollAngleDegrees  = navx->GetRoll();
 
@@ -151,7 +156,7 @@ public:
     double speed = m_stick.GetY();
     double turn = m_turnRateLimiter.Calculate(m_stick.GetTwist());
 
-    if (fabs(speed) < deadband || m_teleopBalance) {
+    if (fabs(speed) < deadband) {
       speed = 0.0;
     }
     

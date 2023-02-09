@@ -61,6 +61,11 @@ public:
   void RobotInit() override {
 
     //m_grabber.RobotInit();
+    m_ArmRetract.RestoreFactoryDefaults();
+    m_ArmRotate.RestoreFactoryDefaults();
+
+
+
 
   }
 
@@ -111,6 +116,8 @@ public:
 
   void TeleopPeriodic() override
   {
+    //_______________________________________________________
+    //Autobalance (teleop version) 
     if (m_stick.GetRawButtonPressed(4)){
       m_teleopBalance = !m_teleopBalance;
     }
@@ -145,13 +152,16 @@ public:
           m_leftFollower.Follow(m_leftLeader);
           m_rightFollower.Follow(m_rightLeader);
     }
-    
+    //______________________________________________________________________________
+    //DRIVE SYSTEM
+
     //Button three on the joystick toggles "slow drive" mode.
     //In this mode, the robot's drive and turn speed are limited to 30%.
     if (m_stick.GetRawButtonPressed(3)){
       m_slowDrive = !m_slowDrive;
     }
 
+    //deadband value of 0.05, throw out any inputs less than that value
     const double deadband = 0.05;
     double speed = m_stick.GetY();
     double turn = m_turnRateLimiter.Calculate(m_stick.GetTwist());
@@ -171,8 +181,19 @@ public:
       m_leftFollower.Follow(m_leftLeader);
       m_rightFollower.Follow(m_rightLeader);
     }
+    //_____________________________________________________________________________
+    //Arm System
+    if (m_xbox.GetYButtonPressed()){
 
+      armFront = !armFront;
+    
+    }
+    if (armFront){
+      m_ArmRetract.GetEncoder().SetPosition(21);
+    } else {
+      m_ArmRetract.GetEncoder().SetPosition(0);
 
+    }
 
     //console output
     
@@ -254,6 +275,12 @@ private:
   TalonSRX m_GrabberAngle = {kGrabberAngleID};
 
   GrabberSubsystem m_grabber{m_GrabberIntake, m_GrabberAngle, m_xbox};
+
+  rev::CANSparkMax m_ArmRotate{kArmRotateID, rev::CANSparkMax::MotorType::kBrushless};
+  rev::CANSparkMax m_ArmRetract{kArmRetractID, rev::CANSparkMax::MotorType::kBrushless};
+
+  bool armFront = false;
+
 
 
   // Allow the robot to access the data from the camera. 

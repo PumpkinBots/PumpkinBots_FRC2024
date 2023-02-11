@@ -2,6 +2,8 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
+
+//Include statments
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -37,30 +39,22 @@
 #include "AHRS.h"
 #include <frc/SerialPort.h>
 
-//using namespace frc;
-
 class Robot : public frc::TimedRobot
 {
 public:
   Robot()
   {
+    //Set up gyro
     navx = new AHRS(frc::SPI::Port::kMXP);
 
-    //navx = new AHRS(SerialPort::kMXP);
-
-    //m_robotDrive.SetExpiration(100_ms);
     m_timer.Start();
-    /*
-    m_testDrives.push_back(&m_leftLeader);
-    m_testDrives.push_back(&m_leftFollower);
-    m_testDrives.push_back(&m_rightLeader);
-    m_testDrives.push_back(&m_rightFollower);
-  */
+
   }
 
   void RobotInit() override {
 
     //m_grabber.RobotInit();
+    // Restore motor controller parameters to factory default
     m_ArmRetract.RestoreFactoryDefaults();
     m_ArmRotate.RestoreFactoryDefaults();
 
@@ -78,25 +72,38 @@ public:
   void AutonomousPeriodic() override
   {
 
+
+    // AUTOBALANCE CODE
+
+    //xAxisRate is the speed of the robot
     double xAxisRate          = 0;
+    //rollAngleDegrees is the angle the robot is at
     double rollAngleDegrees  = navx->GetRoll();
 
+    //If the absolute value of the current angle of the robot is greater
+    //the constant of what we consider is off balance, then change autoBalanceXMode to true;
     if ( !autoBalanceXMode &&
         (fabs(rollAngleDegrees) >=
         fabs(kOffBalanceThresholdDegrees))) {
       autoBalanceXMode = true;
     }
+    //If the absolute value of the current angle of the robot is less
+    //the constant of what we consider is on balance, then change autoBalanceXMode to false;
     else if ( autoBalanceXMode &&
         (fabs(rollAngleDegrees) <=
         fabs(kOnBalanceThresholdDegrees))) {
       autoBalanceXMode = false;
     }
 
+    // If autoBalanceXMode is true, then calculate the speed of the robot (sin(Current angle * pi/180) * -1)
+    // yes, we're actually using trig in real life for the first time ever. 
     if ( autoBalanceXMode ) {
       double rollAngleRadians = rollAngleDegrees * (M_PI / 180.0);
       xAxisRate = sin(rollAngleRadians) * -1;
     }
 
+    // Set the drive speed of the robot to 60% of the speed we just calculated. This 60% may need to be changed again
+    // once we test the autobalance code on the actual balance board. 
     m_leftLeader.Set(ControlMode::PercentOutput, (0.6)*xAxisRate);
     m_rightLeader.Set(ControlMode::PercentOutput,-(0.6)*xAxisRate);
     m_leftFollower.Follow(m_leftLeader);
@@ -116,8 +123,9 @@ public:
 
   void TeleopPeriodic() override
   {
-    //_______________________________________________________
-    //Autobalance (teleop version) 
+
+    // check to see if autobalance should be turned on. 
+    // mapped to button 4 on the drive controller
     if (m_stick.GetRawButtonPressed(4)){
       m_teleopBalance = !m_teleopBalance;
     }
@@ -135,18 +143,24 @@ public:
     //deadband value of 0.05, throw out any inputs less than that value
     const double deadband = 0.05;
     double speed = m_stick.GetY();
+    //Rate limiter limits the acceleration of the turn speed to make it easier to control
     double turn = m_turnRateLimiter.Calculate(m_stick.GetTwist());
 
     if (fabs(speed) < deadband) {
       speed = 0.0;
     }
 
+    // If the autobalance code is enabled, disable the drive speed from user inputs
     if (m_teleopBalance){
       speed = 0.0;
       turn = 0.0;
 
     }
     
+    // The leaders are the front left and front right motors on the robot. Reads the input from the controller
+    // and sets an output according to that value. The followers are the back left and back right motors on the robot.
+    // They equal the exact output to the motor they are following. This is important because our gearboxes will never break
+    // with this system. If a follower and leader were to go different directions, the robot won't be very happy. 
     if (m_slowDrive){
       m_leftLeader.Set(ControlMode::PercentOutput, -(0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, (0.3)*turn);
       m_rightLeader.Set(ControlMode::PercentOutput, (0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, (0.3)*turn);
@@ -160,18 +174,32 @@ public:
     }
     //_____________________________________________________________________________
     //Arm System
+    // basic code, no encoders here yet. Will be moved to a seperate file later. 
+
+    // If the Y button on the xbox controller is pressed, activate the rotation motor
+    // on the arm. 
     if (m_xbox.GetYButtonPressed()){
 
       armFront = !armFront;
     
     }
     if (armFront){
-      //m_ArmRetract.GetEncoder().SetPosition(21);
+      //Set to 20% of how far the right joystick is up or down on the xbox controller. 
+      m_ArmRotate.Set(-(0.2) * m_xbox.GetRightY());
+
     } else {
+
+      m_ArmRotate.Set(0);
+
+
       //m_ArmRetract.GetEncoder().SetPosition(0);
 
     }
 
+
+    // Autobalance code. Exactly the same as it is in the autonomous section.
+    // Will hopefully be able to keep the robot balance while other robots drive onto the station
+    // at the end of a match. Will disable user inputs. 
     if (m_teleopBalance){
 
           double xAxisRate          = 0;
@@ -200,7 +228,7 @@ public:
 
     }
 
-    //console output
+    //console output (delete the // to read the outputs of different things)
     
     //fmt::print("y={}\n", m_stick.GetY());
     //fmt::print("z={}\n", m_stick.GetTwist());
@@ -217,10 +245,6 @@ public:
 
   void TestInit() override
   {
-    // Disable to drive motors in Test mode so that the robot stays on the bench.
-    //m_robotDrive.StopMotor();
-
-
     m_testIndex = 0;
     m_stick.GetRawButtonPressed(testStartButton);
     m_stick.GetRawButtonPressed(testNextButton);
@@ -254,37 +278,51 @@ public:
 private:
 
   std::string m_buildVersion;
+
+  // Slow drive starts as false, is enabled by pressing button 3
   bool m_slowDrive = false;
+  // the balance mode in teleop starts as false, enabled by pressing button 4
   bool m_teleopBalance = false;
+
   //Talon drive motors
   TalonSRX m_leftLeader = {kDriveLeftLeader};
   TalonSRX m_leftFollower = {kDriveLeftFollower};
   TalonSRX m_rightLeader = {kDriveRightLeader};
   TalonSRX m_rightFollower = {kDriveRightFollower};
-  //frc::DifferentialDrive m_robotDrive{m_leftLeader, m_rightLeader};
 
   //joystick USB port connection (assigned in driver station)
+  // Make sure these are correctly assigned in the driver station, if they aren't the robot can't read any inputs
   frc::Joystick m_stick{0};
   frc::XboxController m_xbox{1};
   
+  //Set up slew rate limiter
   frc::SlewRateLimiter<units::scalar> m_turnRateLimiter{1 / 1_s, 0};
+
+  //exactly what you think, its a timer
   frc::Timer m_timer;
 
+  //Set up gyro
   AHRS *navx;
 
+  //Constants for autobalance, 10 degrees for off balance and 5 for on balance. 
+  //I want to mess around with these constants at some point. 
   constexpr static const double kOffBalanceThresholdDegrees = 10.0f;
   constexpr static const double kOnBalanceThresholdDegrees  = 5.0f;
   bool autoBalanceXMode = false;
   bool autoBalanceYMode = false;
 
+  //Grabber talon motors
   TalonSRX m_GrabberIntake = {kGrabberIntakeID};
   TalonSRX m_GrabberAngle = {kGrabberAngleID};
 
+  //Grabber subsystem (currently broken yay :D)
   GrabberSubsystem m_grabber{m_GrabberIntake, m_GrabberAngle, m_xbox};
 
+  //Arm NEO motors
   rev::CANSparkMax m_ArmRotate{kArmRotateID, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax m_ArmRetract{kArmRetractID, rev::CANSparkMax::MotorType::kBrushless};
 
+  //Arm constants
   bool armFront = false;
 
 
@@ -296,7 +334,7 @@ private:
   double targetArea = table->GetNumber("ta",0.0);
   double targetSkew = table->GetNumber("ts",0.0);
 
-  // Silly independent motor test
+  // independent motor test
   int m_testIndex = 0;
   int testStartButton = 7;
   int testNextButton = 8;

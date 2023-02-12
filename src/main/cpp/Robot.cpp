@@ -58,8 +58,38 @@ public:
     m_ArmRetract.RestoreFactoryDefaults();
     m_ArmRotate.RestoreFactoryDefaults();
 
+    // set PID coefficients
+    m_ArmRotatePidController.SetP(kP);
+    m_ArmRotatePidController.SetI(kI);
+    m_ArmRotatePidController.SetD(kD);
+    m_ArmRotatePidController.SetIZone(kIz);
+    m_ArmRotatePidController.SetFF(kFF);
+    m_ArmRotatePidController.SetOutputRange(kMinOutput, kMaxOutput);
 
+    m_ArmRotatePidController.SetSmartMotionMaxVelocity(kMaxVel);
+    m_ArmRotatePidController.SetSmartMotionMinOutputVelocity(kMinVel);
+    m_ArmRotatePidController.SetSmartMotionMaxAccel(kMaxAcc);
+    m_ArmRotatePidController.SetSmartMotionAllowedClosedLoopError(kAllErr);
 
+    // display PID coefficients on SmartDashboard
+    frc::SmartDashboard::PutNumber("P Gain", kP);
+    frc::SmartDashboard::PutNumber("I Gain", kI);
+    frc::SmartDashboard::PutNumber("D Gain", kD);
+    frc::SmartDashboard::PutNumber("I Zone", kIz);
+    frc::SmartDashboard::PutNumber("Feed Forward", kFF);
+    frc::SmartDashboard::PutNumber("Max Output", kMaxOutput);
+    frc::SmartDashboard::PutNumber("Min Output", kMinOutput);
+
+    // display Smart Motion coefficients
+    frc::SmartDashboard::PutNumber("Max Velocity", kMaxVel);
+    frc::SmartDashboard::PutNumber("Min Velocity", kMinVel);
+    frc::SmartDashboard::PutNumber("Max Acceleration", kMaxAcc);
+    frc::SmartDashboard::PutNumber("Allowed Closed Loop Error", kAllErr);
+    frc::SmartDashboard::PutNumber("Set Position", 0);
+    frc::SmartDashboard::PutNumber("Set Velocity", 0);
+
+    // button to toggle between velocity and smart motion modes
+    frc::SmartDashboard::PutBoolean("Mode", true);
 
   }
 
@@ -118,6 +148,8 @@ public:
     //m_robotDrive.StopMotor();
     m_turnRateLimiter.Reset(0);
     m_grabber.ModeInit();
+
+
 
   }
 
@@ -237,9 +269,55 @@ public:
     //fmt::print("pitch={}\n", navx->GetPitch());
 
     //m_grabber.RunPeriodic();
-    fmt::print("Roll={}\n", navx->GetRoll());
+    //fmt::print("Roll={}\n", navx->GetRoll());
+    fmt::print("ArmRotation={}\n", m_ArmRotateEncoder.GetPosition());
 
+    // read PID coefficients from SmartDashboard
+    double p = frc::SmartDashboard::GetNumber("P Gain", 0);
+    double i = frc::SmartDashboard::GetNumber("I Gain", 0);
+    double d = frc::SmartDashboard::GetNumber("D Gain", 0);
+    double iz = frc::SmartDashboard::GetNumber("I Zone", 0);
+    double ff = frc::SmartDashboard::GetNumber("Feed Forward", 0);
+    double max = frc::SmartDashboard::GetNumber("Max Output", 0);
+    double min = frc::SmartDashboard::GetNumber("Min Output", 0);
+    double maxV = frc::SmartDashboard::GetNumber("Max Velocity", 0);
+    double minV = frc::SmartDashboard::GetNumber("Min Velocity", 0);
+    double maxA = frc::SmartDashboard::GetNumber("Max Acceleration", 0);
+    double allE = frc::SmartDashboard::GetNumber("Allowed Closed Loop Error", 0);    
+
+    if((p != kP))   { m_ArmRotatePidController.SetP(p); kP = p; }
+    if((i != kI))   { m_ArmRotatePidController.SetI(i); kI = i; }
+    if((d != kD))   { m_ArmRotatePidController.SetD(d); kD = d; }
+    if((iz != kIz)) { m_ArmRotatePidController.SetIZone(iz); kIz = iz; }
+    if((ff != kFF)) { m_ArmRotatePidController.SetFF(ff); kFF = ff; }
+    if((max != kMaxOutput) || (min != kMinOutput)) { m_ArmRotatePidController.SetOutputRange(min, max); kMinOutput = min; kMaxOutput = max; }
+    if((maxV != kMaxVel)) { m_ArmRotatePidController.SetSmartMotionMaxVelocity(maxV); kMaxVel = maxV; }
+    if((minV != kMinVel)) { m_ArmRotatePidController.SetSmartMotionMinOutputVelocity(minV); kMinVel = minV; }
+    if((maxA != kMaxAcc)) { m_ArmRotatePidController.SetSmartMotionMaxAccel(maxA); kMaxAcc = maxA; }
+    if((allE != kAllErr)) { m_ArmRotatePidController.SetSmartMotionAllowedClosedLoopError(allE); allE = kAllErr; }
   
+    double SetPoint, ProcessVariable;
+    bool mode = frc::SmartDashboard::GetBoolean("Mode", false);
+
+    if(mode) {
+      SetPoint = frc::SmartDashboard::GetNumber("Set Velocity", 0);
+      m_ArmRotatePidController.SetReference(SetPoint, rev::CANSparkMax::ControlType::kVelocity);
+      ProcessVariable = m_ArmRotateEncoder.GetVelocity();
+    } else {
+      SetPoint = frc::SmartDashboard::GetNumber("Set Position", 0);
+      /**
+       * As with other PID modes, Smart Motion is set by calling the
+       * SetReference method on an existing pid object and setting
+       * the control type to kSmartMotion
+       */
+      m_ArmRotatePidController.SetReference(SetPoint, rev::CANSparkMax::ControlType::kSmartMotion);
+      ProcessVariable = m_ArmRotateEncoder.GetPosition();
+    }    
+
+    frc::SmartDashboard::PutNumber("Set Point", SetPoint);
+    frc::SmartDashboard::PutNumber("Process Variable", ProcessVariable);
+    frc::SmartDashboard::PutNumber("Output", m_ArmRotate.GetAppliedOutput());
+
   }
 
 
@@ -249,15 +327,15 @@ public:
     m_stick.GetRawButtonPressed(testStartButton);
     m_stick.GetRawButtonPressed(testNextButton);
     m_runTest = false;
-    frc::SmartDashboard::PutNumber("AAindex", m_testIndex);
-    fmt::print("Switched to index {}  device id {}\n", m_testIndex, m_testDrives[m_testIndex]->GetDeviceId());
+    //frc::SmartDashboard::PutNumber("AAindex", m_testIndex);
+    //fmt::print("Switched to index {}  device id {}\n", m_testIndex, m_testDrives[m_testIndex]->GetDeviceId());
 
   }
 
   void TestPeriodic() override
   {
 
-  frc::SmartDashboard::PutNumber("AAindex", m_testIndex);
+  //frc::SmartDashboard::PutNumber("AAindex", m_testIndex);
   if (m_stick.GetRawButtonPressed(testStartButton)) {
     m_runTest = !m_runTest;
   }
@@ -321,6 +399,18 @@ private:
   //Arm NEO motors
   rev::CANSparkMax m_ArmRotate{kArmRotateID, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax m_ArmRetract{kArmRetractID, rev::CANSparkMax::MotorType::kBrushless};
+
+  rev::SparkMaxRelativeEncoder m_ArmRotateEncoder = m_ArmRotate.GetEncoder();
+  rev::SparkMaxPIDController m_ArmRotatePidController = m_ArmRotate.GetPIDController();
+
+  // default PID coefficients
+  double kP = 5e-5, kI = 1e-6, kD = 0, kIz = 0, kFF = 0.000156, kMaxOutput = 1, kMinOutput = -1;
+
+  // default smart motion coefficients
+  double kMaxVel = 2000, kMinVel = 0, kMaxAcc = 1500, kAllErr = 0;
+
+  // motor max RPM
+  const double MaxRPM = 5700;  
 
   //Arm constants
   bool armFront = false;

@@ -444,7 +444,7 @@ private:
 
   //Arm constants
   bool armFront = false;
-  int armCount = 1;
+  int armCount = 0;
 
 
 

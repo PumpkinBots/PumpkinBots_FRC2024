@@ -36,7 +36,6 @@
 #include "ctre/Phoenix.h"
 #include <cameraserver/CameraServer.h>
 
-
 //gryo
 #include "AHRS.h"
 #include <frc/SerialPort.h>
@@ -55,7 +54,6 @@ public:
 
   void RobotInit() override {
     frc::CameraServer::StartAutomaticCapture();
-
     //m_grabber.RobotInit();
     // Restore motor controller parameters to factory default
     m_ArmRetract.RestoreFactoryDefaults();

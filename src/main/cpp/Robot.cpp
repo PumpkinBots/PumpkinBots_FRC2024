@@ -58,6 +58,8 @@ public:
     // Restore motor controller parameters to factory default
     m_ArmRetract.RestoreFactoryDefaults();
     m_ArmRotate.RestoreFactoryDefaults();
+    m_GrabberAngle.RestoreFactoryDefaults();
+    m_GrabberIntake.RestoreFactoryDefaults();
 
     // set PID coefficients
     m_ArmRotatePidController.SetP(kP);

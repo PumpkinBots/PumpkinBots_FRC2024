@@ -34,6 +34,8 @@
 #include <frc/filter/SlewRateLimiter.h>
 
 #include "ctre/Phoenix.h"
+#include <cameraserver/CameraServer.h>
+
 
 //gryo
 #include "AHRS.h"
@@ -52,6 +54,7 @@ public:
   }
 
   void RobotInit() override {
+    frc::CameraServer::StartAutomaticCapture();
 
     //m_grabber.RobotInit();
     // Restore motor controller parameters to factory default
@@ -147,7 +150,7 @@ public:
   {
     //m_robotDrive.StopMotor();
     m_turnRateLimiter.Reset(0);
-    m_grabber.ModeInit();
+    //m_grabber.ModeInit();
 
 
 
@@ -205,30 +208,6 @@ public:
       m_rightFollower.Follow(m_rightLeader);
     }
     //_____________________________________________________________________________
-    //Arm System
-    // basic code, no encoders here yet. Will be moved to a seperate file later. 
-
-    // If the Y button on the xbox controller is pressed, activate the rotation motor
-    // on the arm. 
-    if (m_xbox.GetYButtonPressed()){
-
-      armFront = !armFront;
-    
-    }
-    if (armFront){
-      //Set to 20% of how far the right joystick is up or down on the xbox controller. 
-      m_ArmRotate.Set(-(0.2) * m_xbox.GetRightY());
-
-    } else {
-
-      m_ArmRotate.Set(0);
-
-
-      //m_ArmRetract.GetEncoder().SetPosition(0);
-
-    }
-
-
     // Autobalance code. Exactly the same as it is in the autonomous section.
     // Will hopefully be able to keep the robot balance while other robots drive onto the station
     // at the end of a match. Will disable user inputs. 
@@ -269,9 +248,12 @@ public:
     //fmt::print("pitch={}\n", navx->GetPitch());
 
     //m_grabber.RunPeriodic();
-    //fmt::print("Roll={}\n", navx->GetRoll());
-    fmt::print("ArmRotation={}\n", m_ArmRotateEncoder.GetPosition());
+    fmt::print("Roll={}\n", navx->GetRoll());
+    //fmt::print("ArmRotation={}\n", m_ArmRotateEncoder.GetPosition());
 
+    //______________________________________________________________________________________
+    //Arm System
+    //Will be moved to a seperate file later. 
     // read PID coefficients from SmartDashboard
     double p = frc::SmartDashboard::GetNumber("P Gain", 0);
     double i = frc::SmartDashboard::GetNumber("I Gain", 0);
@@ -305,18 +287,60 @@ public:
       ProcessVariable = m_ArmRotateEncoder.GetVelocity();
     } else {
       SetPoint = frc::SmartDashboard::GetNumber("Set Position", 0);
+
+          // If the Y button on the xbox controller is pressed, activate the rotation motor
+    // on the arm. 
+      if (m_xbox.GetYButtonPressed()){
+
+        armFront = true;
+        armCount += 1;
+      
+      }
+      if (armCount % 3 == 1 && armFront == true){
+        SetPoint = 13;
+      } else if (armCount % 3 == 2 && armFront == true){
+        SetPoint = 27;
+      } else if (armCount % 3 == 0 && armFront == true){
+        SetPoint = 40;
+      }
       /**
        * As with other PID modes, Smart Motion is set by calling the
        * SetReference method on an existing pid object and setting
        * the control type to kSmartMotion
        */
-      m_ArmRotatePidController.SetReference(SetPoint, rev::CANSparkMax::ControlType::kSmartMotion);
+      if (m_ArmRotateEncoder.GetPosition() > SetPoint + 0.1 || m_ArmRotateEncoder.GetPosition() < SetPoint - 0.1){
+        m_ArmRotatePidController.SetReference(SetPoint, rev::CANSparkMax::ControlType::kSmartMotion);
+      }
       ProcessVariable = m_ArmRotateEncoder.GetPosition();
     }    
 
     frc::SmartDashboard::PutNumber("Set Point", SetPoint);
     frc::SmartDashboard::PutNumber("Process Variable", ProcessVariable);
     frc::SmartDashboard::PutNumber("Output", m_ArmRotate.GetAppliedOutput());
+
+//_________________________________________________________________________________________________________
+//Grabber subsystem (Will be moved to a seperate file later)
+    if (m_xbox.GetAButtonPressed())
+    {
+      m_runGrabberIntakeIn = !m_runGrabberIntakeIn;
+    }
+    if (m_xbox.GetBButtonPressed())
+    {
+      m_runGrabberIntakeOut = !m_runGrabberIntakeOut;
+    }
+    if (m_runGrabberIntakeIn)
+    {
+
+      m_runGrabberIntakeOut = false;
+      m_GrabberIntake.Set(0.8);
+
+    } else if (m_runGrabberIntakeOut)
+    {
+      m_runGrabberIntakeIn = false;
+      m_GrabberIntake.Set(-0.8);
+    } else {
+      m_GrabberIntake.Set(0);
+    }
 
   }
 
@@ -384,17 +408,25 @@ private:
 
   //Constants for autobalance, 10 degrees for off balance and 5 for on balance. 
   //I want to mess around with these constants at some point. 
-  constexpr static const double kOffBalanceThresholdDegrees = 10.0f;
+  constexpr static const double kOffBalanceThresholdDegrees = 5.1f;
   constexpr static const double kOnBalanceThresholdDegrees  = 5.0f;
   bool autoBalanceXMode = false;
   bool autoBalanceYMode = false;
 
-  //Grabber talon motors
-  TalonSRX m_GrabberIntake = {kGrabberIntakeID};
-  TalonSRX m_GrabberAngle = {kGrabberAngleID};
+  //Grabber motors
+  //TalonSRX m_GrabberIntake = {kGrabberIntakeID};
+  //TalonSRX m_GrabberAngle = {kGrabberAngleID};
+  rev::CANSparkMax m_GrabberIntake{kGrabberIntakeID, rev::CANSparkMax::MotorType::kBrushless};
+  rev::CANSparkMax m_GrabberAngle{kGrabberAngleID, rev::CANSparkMax::MotorType::kBrushless};
+
+  //Grabber constants
+  bool m_runGrabberIntakeIn = false;
+  bool m_runGrabberIntakeOut = false;
+  int grabberCount = 1;
+
 
   //Grabber subsystem (currently broken yay :D)
-  GrabberSubsystem m_grabber{m_GrabberIntake, m_GrabberAngle, m_xbox};
+  //GrabberSubsystem m_grabber{m_GrabberIntake, m_GrabberAngle, m_xbox};
 
   //Arm NEO motors
   rev::CANSparkMax m_ArmRotate{kArmRotateID, rev::CANSparkMax::MotorType::kBrushless};
@@ -414,6 +446,9 @@ private:
 
   //Arm constants
   bool armFront = false;
+  int armCount = 1;
+
+
 
 
 

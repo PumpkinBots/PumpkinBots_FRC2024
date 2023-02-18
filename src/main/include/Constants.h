@@ -27,8 +27,9 @@ static constexpr int kDriveLeftFollower = 4;
 static constexpr int kDriveRightLeader = 2;
 static constexpr int kDriveRightFollower = 9;
 
-static constexpr int kGrabberIntakeID = 3;
-static constexpr int kGrabberAngleID = 5;
+static constexpr int kGrabberIntakeID = 6;
+static constexpr int kGrabberAngleID = 3;
 
-static constexpr int kArmRotateID = 6;
+static constexpr int kArmRotateID = 5;
 static constexpr int kArmRetractID = 7;
+static constexpr int kgoGoGadgetArmID = 10;

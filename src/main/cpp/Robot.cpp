@@ -61,7 +61,13 @@ public:
     m_GrabberAngle.RestoreFactoryDefaults();
     m_GrabberIntake.RestoreFactoryDefaults();
 
+    m_leftLeader.ConfigFactoryDefault();
+    m_leftFollower.ConfigFactoryDefault();
+    m_rightLeader.ConfigFactoryDefault();
+    m_rightFollower.ConfigFactoryDefault();
+
     // set PID coefficients
+    //Arm Rotate
     m_ArmRotatePidController.SetP(kP);
     m_ArmRotatePidController.SetI(kI);
     m_ArmRotatePidController.SetD(kD);
@@ -74,7 +80,19 @@ public:
     m_ArmRotatePidController.SetSmartMotionMaxAccel(kMaxAcc);
     m_ArmRotatePidController.SetSmartMotionAllowedClosedLoopError(kAllErr);
 
+    //Grabber Rotate
 
+    m_GrabberAnglePidController.SetP(kP);
+    m_GrabberAnglePidController.SetI(kI);
+    m_GrabberAnglePidController.SetD(kD);
+    m_GrabberAnglePidController.SetIZone(kIz);
+    m_GrabberAnglePidController.SetFF(kFF);
+    m_GrabberAnglePidController.SetOutputRange(kMinOutput, kMaxOutput);
+
+    m_GrabberAnglePidController.SetSmartMotionMaxVelocity(kMaxVel);
+    m_GrabberAnglePidController.SetSmartMotionMinOutputVelocity(kMinVel);
+    m_GrabberAnglePidController.SetSmartMotionMaxAccel(kMaxAcc);
+    m_GrabberAnglePidController.SetSmartMotionAllowedClosedLoopError(kAllErr);
 
   }
 
@@ -140,6 +158,8 @@ public:
 
   void TeleopPeriodic() override
   {
+
+    m_goGoGadgetArm.Set(ControlMode::PercentOutput, m_xbox.GetLeftY());
 
     // check to see if autobalance should be turned on. 
     // mapped to button 4 on the drive controller
@@ -231,14 +251,15 @@ public:
 
     //m_grabber.RunPeriodic();
     //fmt::print("Roll={}\n", navx->GetRoll());
-    fmt::print("ArmRotation={}\n", m_ArmRotateEncoder.GetPosition());
+    //fmt::print("ArmRotation={}\n", m_ArmRotateEncoder.GetPosition());
+    fmt::print("GrabberRotation={}\n", m_GrabberAngleEncoder.GetPosition());
 
     //______________________________________________________________________________________
     //Arm System
     //Will be moved to a seperate file later. 
     // read PID coefficients from SmartDashboard 
 
-    double SetPoint, ProcessVariable;
+    double SetPointArmRotate, ProcessVariableArmRotate;
 
     // If the Y button on the xbox controller is pressed, 
     // activate the rotation motor on the arm. 
@@ -246,28 +267,31 @@ public:
 
         armRotateOn = true;
         armCount += 1;
+
+
       
       }
       if (armCount % 3 == 1 && armRotateOn == true){
-        SetPoint = 13;
+        SetPointArmRotate = 13;
+
       } else if (armCount % 3 == 2 && armRotateOn == true){
-        SetPoint = 27;
+        SetPointArmRotate = 27;
       } else if (armCount % 3 == 0 && armRotateOn == true){
-        SetPoint = 40;
+        SetPointArmRotate = 40;
       }
       /**
        * As with other PID modes, Smart Motion is set by calling the
        * SetReference method on an existing pid object and setting
        * the control type to kSmartMotion
        */
-      if (m_ArmRotateEncoder.GetPosition() > SetPoint + 0.1 || m_ArmRotateEncoder.GetPosition() < SetPoint - 0.1){
-        m_ArmRotatePidController.SetReference(SetPoint, rev::CANSparkMax::ControlType::kSmartMotion);
+      if (m_ArmRotateEncoder.GetPosition() > SetPointArmRotate + 0.1 || m_ArmRotateEncoder.GetPosition() < SetPointArmRotate - 0.1){
+        m_ArmRotatePidController.SetReference(SetPointArmRotate, rev::CANSparkMax::ControlType::kSmartMotion);
       }
-      ProcessVariable = m_ArmRotateEncoder.GetPosition();
+      ProcessVariableArmRotate = m_ArmRotateEncoder.GetPosition();
     
 
-    frc::SmartDashboard::PutNumber("Set Point", SetPoint);
-    frc::SmartDashboard::PutNumber("Process Variable", ProcessVariable);
+    frc::SmartDashboard::PutNumber("Set Point", SetPointArmRotate);
+    frc::SmartDashboard::PutNumber("Process Variable", ProcessVariableArmRotate);
     frc::SmartDashboard::PutNumber("Output", m_ArmRotate.GetAppliedOutput());
 
 //_________________________________________________________________________________________________________
@@ -290,6 +314,36 @@ public:
     } else {
       m_GrabberIntake.Set(0);
     }
+
+    double SetPointGrabberAngle, ProcessVariableGrabberAngle;
+
+    // If the A button on the xbox controller is pressed, 
+    // activate the angle motor on the grabber. 
+      SetPointGrabberAngle = -4;
+
+      if (m_xbox.GetAButtonPressed()){
+
+        grabberAngleOn = true;
+        grabberCount += 1;
+      
+      }
+      if (grabberCount % 3 == 1 && grabberAngleOn == true){
+        SetPointGrabberAngle = -4;
+
+      } else if (grabberCount % 3 == 2 && grabberAngleOn == true){
+        SetPointGrabberAngle = -11;
+      } else if (grabberCount % 3 == 0 && grabberAngleOn == true){
+        SetPointGrabberAngle = -18;
+      }
+      /**
+       * As with other PID modes, Smart Motion is set by calling the
+       * SetReference method on an existing pid object and setting
+       * the control type to kSmartMotion
+       */
+      if (m_GrabberAngleEncoder.GetPosition() > SetPointGrabberAngle + 0.1 || m_GrabberAngleEncoder.GetPosition() < SetPointGrabberAngle - 0.1){
+        m_GrabberAnglePidController.SetReference(SetPointGrabberAngle, rev::CANSparkMax::ControlType::kSmartMotion);
+      }
+      ProcessVariableGrabberAngle = m_GrabberAngleEncoder.GetPosition();
 
 
 
@@ -370,10 +424,14 @@ private:
   rev::CANSparkMax m_GrabberIntake{kGrabberIntakeID, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax m_GrabberAngle{kGrabberAngleID, rev::CANSparkMax::MotorType::kBrushless};
 
+  rev::SparkMaxRelativeEncoder m_GrabberAngleEncoder = m_GrabberAngle.GetEncoder();
+  rev::SparkMaxPIDController m_GrabberAnglePidController = m_GrabberAngle.GetPIDController();
+
   //Grabber constants
   bool m_runGrabberIntakeIn = false;
   bool m_runGrabberIntakeOut = false;
-  int grabberCount = 1;
+  int grabberCount = 0;
+  bool grabberAngleOn = false;
 
 
   //Grabber subsystem (currently broken yay :D)
@@ -382,6 +440,8 @@ private:
   //Arm NEO motors
   rev::CANSparkMax m_ArmRotate{kArmRotateID, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax m_ArmRetract{kArmRetractID, rev::CANSparkMax::MotorType::kBrushless};
+  TalonSRX m_goGoGadgetArm = {kgoGoGadgetArmID};
+
 
   rev::SparkMaxRelativeEncoder m_ArmRotateEncoder = m_ArmRotate.GetEncoder();
   rev::SparkMaxPIDController m_ArmRotatePidController = m_ArmRotate.GetPIDController();

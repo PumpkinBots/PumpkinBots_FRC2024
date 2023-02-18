@@ -74,25 +74,7 @@ public:
     m_ArmRotatePidController.SetSmartMotionMaxAccel(kMaxAcc);
     m_ArmRotatePidController.SetSmartMotionAllowedClosedLoopError(kAllErr);
 
-    // display PID coefficients on SmartDashboard
-    frc::SmartDashboard::PutNumber("P Gain", kP);
-    frc::SmartDashboard::PutNumber("I Gain", kI);
-    frc::SmartDashboard::PutNumber("D Gain", kD);
-    frc::SmartDashboard::PutNumber("I Zone", kIz);
-    frc::SmartDashboard::PutNumber("Feed Forward", kFF);
-    frc::SmartDashboard::PutNumber("Max Output", kMaxOutput);
-    frc::SmartDashboard::PutNumber("Min Output", kMinOutput);
 
-    // display Smart Motion coefficients
-    frc::SmartDashboard::PutNumber("Max Velocity", kMaxVel);
-    frc::SmartDashboard::PutNumber("Min Velocity", kMinVel);
-    frc::SmartDashboard::PutNumber("Max Acceleration", kMaxAcc);
-    frc::SmartDashboard::PutNumber("Allowed Closed Loop Error", kAllErr);
-    frc::SmartDashboard::PutNumber("Set Position", 0);
-    frc::SmartDashboard::PutNumber("Set Velocity", 0);
-
-    // button to toggle between velocity and smart motion modes
-    frc::SmartDashboard::PutBoolean("Mode", true);
 
   }
 
@@ -248,59 +230,29 @@ public:
     //fmt::print("pitch={}\n", navx->GetPitch());
 
     //m_grabber.RunPeriodic();
-    fmt::print("Roll={}\n", navx->GetRoll());
-    //fmt::print("ArmRotation={}\n", m_ArmRotateEncoder.GetPosition());
+    //fmt::print("Roll={}\n", navx->GetRoll());
+    fmt::print("ArmRotation={}\n", m_ArmRotateEncoder.GetPosition());
 
     //______________________________________________________________________________________
     //Arm System
     //Will be moved to a seperate file later. 
-    // read PID coefficients from SmartDashboard
-    double p = frc::SmartDashboard::GetNumber("P Gain", 0);
-    double i = frc::SmartDashboard::GetNumber("I Gain", 0);
-    double d = frc::SmartDashboard::GetNumber("D Gain", 0);
-    double iz = frc::SmartDashboard::GetNumber("I Zone", 0);
-    double ff = frc::SmartDashboard::GetNumber("Feed Forward", 0);
-    double max = frc::SmartDashboard::GetNumber("Max Output", 0);
-    double min = frc::SmartDashboard::GetNumber("Min Output", 0);
-    double maxV = frc::SmartDashboard::GetNumber("Max Velocity", 0);
-    double minV = frc::SmartDashboard::GetNumber("Min Velocity", 0);
-    double maxA = frc::SmartDashboard::GetNumber("Max Acceleration", 0);
-    double allE = frc::SmartDashboard::GetNumber("Allowed Closed Loop Error", 0);    
+    // read PID coefficients from SmartDashboard 
 
-    if((p != kP))   { m_ArmRotatePidController.SetP(p); kP = p; }
-    if((i != kI))   { m_ArmRotatePidController.SetI(i); kI = i; }
-    if((d != kD))   { m_ArmRotatePidController.SetD(d); kD = d; }
-    if((iz != kIz)) { m_ArmRotatePidController.SetIZone(iz); kIz = iz; }
-    if((ff != kFF)) { m_ArmRotatePidController.SetFF(ff); kFF = ff; }
-    if((max != kMaxOutput) || (min != kMinOutput)) { m_ArmRotatePidController.SetOutputRange(min, max); kMinOutput = min; kMaxOutput = max; }
-    if((maxV != kMaxVel)) { m_ArmRotatePidController.SetSmartMotionMaxVelocity(maxV); kMaxVel = maxV; }
-    if((minV != kMinVel)) { m_ArmRotatePidController.SetSmartMotionMinOutputVelocity(minV); kMinVel = minV; }
-    if((maxA != kMaxAcc)) { m_ArmRotatePidController.SetSmartMotionMaxAccel(maxA); kMaxAcc = maxA; }
-    if((allE != kAllErr)) { m_ArmRotatePidController.SetSmartMotionAllowedClosedLoopError(allE); allE = kAllErr; }
-  
     double SetPoint, ProcessVariable;
-    bool mode = frc::SmartDashboard::GetBoolean("Mode", false);
 
-    if(mode) {
-      SetPoint = frc::SmartDashboard::GetNumber("Set Velocity", 0);
-      m_ArmRotatePidController.SetReference(SetPoint, rev::CANSparkMax::ControlType::kVelocity);
-      ProcessVariable = m_ArmRotateEncoder.GetVelocity();
-    } else {
-      SetPoint = frc::SmartDashboard::GetNumber("Set Position", 0);
-
-          // If the Y button on the xbox controller is pressed, activate the rotation motor
-    // on the arm. 
+    // If the Y button on the xbox controller is pressed, 
+    // activate the rotation motor on the arm. 
       if (m_xbox.GetYButtonPressed()){
 
-        armFront = true;
+        armRotateOn = true;
         armCount += 1;
       
       }
-      if (armCount % 3 == 1 && armFront == true){
+      if (armCount % 3 == 1 && armRotateOn == true){
         SetPoint = 13;
-      } else if (armCount % 3 == 2 && armFront == true){
+      } else if (armCount % 3 == 2 && armRotateOn == true){
         SetPoint = 27;
-      } else if (armCount % 3 == 0 && armFront == true){
+      } else if (armCount % 3 == 0 && armRotateOn == true){
         SetPoint = 40;
       }
       /**
@@ -312,7 +264,7 @@ public:
         m_ArmRotatePidController.SetReference(SetPoint, rev::CANSparkMax::ControlType::kSmartMotion);
       }
       ProcessVariable = m_ArmRotateEncoder.GetPosition();
-    }    
+    
 
     frc::SmartDashboard::PutNumber("Set Point", SetPoint);
     frc::SmartDashboard::PutNumber("Process Variable", ProcessVariable);
@@ -320,27 +272,26 @@ public:
 
 //_________________________________________________________________________________________________________
 //Grabber subsystem (Will be moved to a seperate file later)
-    if (m_xbox.GetAButtonPressed())
-    {
-      m_runGrabberIntakeIn = !m_runGrabberIntakeIn;
-    }
-    if (m_xbox.GetBButtonPressed())
-    {
-      m_runGrabberIntakeOut = !m_runGrabberIntakeOut;
-    }
-    if (m_runGrabberIntakeIn)
-    {
 
-      m_runGrabberIntakeOut = false;
+    m_runGrabberIntakeIn = m_xbox.GetLeftTriggerAxis() > 0.1;
+    m_runGrabberIntakeOut = m_xbox.GetRightTriggerAxis() > 0.1;
+
+
+    if (m_runGrabberIntakeIn && m_runGrabberIntakeOut)
+    {
+      m_GrabberIntake.Set(0);
+    } else if (m_runGrabberIntakeIn)
+    {
       m_GrabberIntake.Set(0.8);
 
     } else if (m_runGrabberIntakeOut)
     {
-      m_runGrabberIntakeIn = false;
       m_GrabberIntake.Set(-0.8);
     } else {
       m_GrabberIntake.Set(0);
     }
+
+
 
   }
 
@@ -445,7 +396,7 @@ private:
   const double MaxRPM = 5700;  
 
   //Arm constants
-  bool armFront = false;
+  bool armRotateOn = false;
   int armCount = 0;
 
 

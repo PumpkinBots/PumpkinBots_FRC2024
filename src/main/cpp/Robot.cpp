@@ -66,6 +66,41 @@ public:
     m_rightLeader.ConfigFactoryDefault();
     m_rightFollower.ConfigFactoryDefault();
 
+    m_rah.ConfigFactoryDefault();
+    int absolutePosition = m_rah.GetSensorCollection().GetPulseWidthPosition();
+/* use the low level API to set the quad encoder signal */
+		m_rah.SetSelectedSensorPosition(absolutePosition, kPIDLoopIdx,
+				kTimeoutMs);
+    m_rah.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
+		m_rah.SetSensorPhase(true);
+
+    m_rah.SetStatusFramePeriod(StatusFrameEnhanced::Status_13_Base_PIDF0, 10, 10);
+    m_rah.SetStatusFramePeriod(StatusFrameEnhanced::Status_10_MotionMagic, 10, 10);
+
+		/* set the peak and nominal outputs, 12V means full */
+    m_rah.ConfigNominalOutputForward(0, 10);
+    m_rah.ConfigNominalOutputReverse(0, 10);
+    m_rah.ConfigPeakOutputForward(1, 10);
+    m_rah.ConfigPeakOutputReverse(-1, 10);
+
+		/* set closed loop gains in slot0 */
+    m_rah.SelectProfileSlot(0, 0);
+    m_rah.Config_kF(0, 0.3, 10);
+    m_rah.Config_kP(0, 0.1, 10);
+    m_rah.Config_kI(0, 0.0, 10);
+    m_rah.Config_kD(0, 0.0, 10);
+
+    m_rah.ConfigMotionCruiseVelocity(1500, 10);
+    m_rah.ConfigMotionAcceleration(1500, 10);
+
+    m_rah.SetSelectedSensorPosition(0, 0, 10);
+    
+    //m_rah.ConfigMotionCruiseVelocity(10, 10);
+    m_rah.SetSensorPhase(true);
+    m_rah.SetStatusFramePeriod(StatusFrameEnhanced::Status_13_Base_PIDF0, 10, 10);
+    m_rah.SetStatusFramePeriod(StatusFrameEnhanced::Status_10_MotionMagic, 10, 10);
+
+
     // set PID coefficients
     //Arm Rotate
     m_ArmRotatePidController.SetP(kP);
@@ -81,7 +116,7 @@ public:
     m_ArmRotatePidController.SetSmartMotionAllowedClosedLoopError(kAllErr);
 
     //Grabber Rotate
-
+    //TO FIX BUG, MAYBE CHANGE VARIABLES TO THERE OWN STUFF 
     m_GrabberAnglePidController.SetP(kP);
     m_GrabberAnglePidController.SetI(kI);
     m_GrabberAnglePidController.SetD(kD);
@@ -152,6 +187,7 @@ public:
     m_turnRateLimiter.Reset(0);
     //m_grabber.ModeInit();
 
+    double m_rahSSS =  m_rah.GetSensorCollection().GetQuadraturePosition();
 
 
   }
@@ -159,7 +195,9 @@ public:
   void TeleopPeriodic() override
   {
 
-    m_goGoGadgetArm.Set(ControlMode::PercentOutput, m_xbox.GetLeftY());
+
+
+
 
     // check to see if autobalance should be turned on. 
     // mapped to button 4 on the drive controller
@@ -252,14 +290,15 @@ public:
     //m_grabber.RunPeriodic();
     //fmt::print("Roll={}\n", navx->GetRoll());
     //fmt::print("ArmRotation={}\n", m_ArmRotateEncoder.GetPosition());
-    fmt::print("GrabberRotation={}\n", m_GrabberAngleEncoder.GetPosition());
+    //fmt::print("GrabberRotation={}\n", m_GrabberAngleEncoder.GetPosition());
 
     //______________________________________________________________________________________
     //Arm System
     //Will be moved to a seperate file later. 
     // read PID coefficients from SmartDashboard 
 
-    double SetPointArmRotate, ProcessVariableArmRotate;
+    double SetPointArmRotate;
+    //, ProcessVariableArmRotate;
 
     // If the Y button on the xbox controller is pressed, 
     // activate the rotation motor on the arm. 
@@ -287,12 +326,34 @@ public:
       if (m_ArmRotateEncoder.GetPosition() > SetPointArmRotate + 0.1 || m_ArmRotateEncoder.GetPosition() < SetPointArmRotate - 0.1){
         m_ArmRotatePidController.SetReference(SetPointArmRotate, rev::CANSparkMax::ControlType::kSmartMotion);
       }
-      ProcessVariableArmRotate = m_ArmRotateEncoder.GetPosition();
+      //ProcessVariableArmRotate = m_ArmRotateEncoder.GetPosition();
     
 
     frc::SmartDashboard::PutNumber("Set Point", SetPointArmRotate);
-    frc::SmartDashboard::PutNumber("Process Variable", ProcessVariableArmRotate);
+    //frc::SmartDashboard::PutNumber("Process Variable", ProcessVariableArmRotate);
     frc::SmartDashboard::PutNumber("Output", m_ArmRotate.GetAppliedOutput());
+
+    double m_rahS = m_rah.GetSensorCollection().GetQuadraturePosition();
+
+    //fmt::print("Position={}\n", m_rahS);
+
+
+    if (m_xbox.GetBButtonPressed()){
+      rahCount += 1;
+      //m_rah.SetSelectedSensorPosition(0, 0, 10);
+    
+    }
+    if (rahCount % 3 == 0){
+      m_rah.Set(ControlMode::MotionMagic, 0);
+    } else if (rahCount % 3 == 1){
+      m_rah.Set(ControlMode::MotionMagic, 10000);
+    } else if (rahCount % 3 == 2){
+      m_rah.Set(ControlMode::MotionMagic, 20000);
+      
+    }
+
+    //double motorOutput = m_rah.GetMotorOutputPercent();
+
 
 //_________________________________________________________________________________________________________
 //Grabber subsystem (Will be moved to a seperate file later)
@@ -315,11 +376,12 @@ public:
       m_GrabberIntake.Set(0);
     }
 
-    double SetPointGrabberAngle, ProcessVariableGrabberAngle;
+    double SetPointGrabberAngle;
+    //, ProcessVariableGrabberAngle;
 
     // If the A button on the xbox controller is pressed, 
     // activate the angle motor on the grabber. 
-      SetPointGrabberAngle = -4;
+      SetPointGrabberAngle = -6;
 
       if (m_xbox.GetAButtonPressed()){
 
@@ -328,12 +390,12 @@ public:
       
       }
       if (grabberCount % 3 == 1 && grabberAngleOn == true){
-        SetPointGrabberAngle = -4;
+        SetPointGrabberAngle = -6;
 
       } else if (grabberCount % 3 == 2 && grabberAngleOn == true){
-        SetPointGrabberAngle = -11;
+        SetPointGrabberAngle = -13;
       } else if (grabberCount % 3 == 0 && grabberAngleOn == true){
-        SetPointGrabberAngle = -18;
+        SetPointGrabberAngle = -20;
       }
       /**
        * As with other PID modes, Smart Motion is set by calling the
@@ -343,7 +405,7 @@ public:
       if (m_GrabberAngleEncoder.GetPosition() > SetPointGrabberAngle + 0.1 || m_GrabberAngleEncoder.GetPosition() < SetPointGrabberAngle - 0.1){
         m_GrabberAnglePidController.SetReference(SetPointGrabberAngle, rev::CANSparkMax::ControlType::kSmartMotion);
       }
-      ProcessVariableGrabberAngle = m_GrabberAngleEncoder.GetPosition();
+      //ProcessVariableGrabberAngle = m_GrabberAngleEncoder.GetPosition();
 
 
 
@@ -440,8 +502,7 @@ private:
   //Arm NEO motors
   rev::CANSparkMax m_ArmRotate{kArmRotateID, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax m_ArmRetract{kArmRetractID, rev::CANSparkMax::MotorType::kBrushless};
-  TalonSRX m_goGoGadgetArm = {kgoGoGadgetArmID};
-
+  TalonSRX m_rah = {kgoGoGadgetArmID};
 
   rev::SparkMaxRelativeEncoder m_ArmRotateEncoder = m_ArmRotate.GetEncoder();
   rev::SparkMaxPIDController m_ArmRotatePidController = m_ArmRotate.GetPIDController();
@@ -449,8 +510,11 @@ private:
   // default PID coefficients
   double kP = 5e-5, kI = 1e-6, kD = 0, kIz = 0, kFF = 0.000156, kMaxOutput = 1, kMinOutput = -1;
 
+  double kP2 = 5e-5, kI2 = 1e-6, kD2 = 0, kIz2 = 0, kFF2 = 0.000156, kMaxOutput2 = 1, kMinOutput2 = -1;
+
   // default smart motion coefficients
   double kMaxVel = 2000, kMinVel = 0, kMaxAcc = 1500, kAllErr = 0;
+
 
   // motor max RPM
   const double MaxRPM = 5700;  
@@ -458,6 +522,17 @@ private:
   //Arm constants
   bool armRotateOn = false;
   int armCount = 0;
+  double rahSetPoint;
+  int rahCount = 0;
+
+
+	int _loops = 0;
+	bool _lastButton1 = false;
+	/** save the target position to servo to */
+	double targetPositionRotations;
+
+  double m_rahSSS;
+
 
 
 

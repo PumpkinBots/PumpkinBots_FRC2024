@@ -28,8 +28,21 @@ static constexpr int kDriveRightLeader = 2;
 static constexpr int kDriveRightFollower = 9;
 
 static constexpr int kGrabberIntakeID = 6;
-static constexpr int kGrabberAngleID = 3;
+static constexpr int kGrabberAngleID = 8;
 
-static constexpr int kArmRotateID = 5;
+static constexpr int kArmRotateID = 3;
 static constexpr int kArmRetractID = 7;
 static constexpr int kgoGoGadgetArmID = 10;
+
+double kSlotIdx = 0;
+
+	/* Talon SRX/ Victor SPX will supported multiple (cascaded) PID loops.
+	 * For now we just want the primary one.
+	 */
+double kPIDLoopIdx = 0;
+
+	/*
+	 * set to zero to skip waiting for confirmation, set to nonzero to wait
+	 * and report to DS if action fails.
+	 */
+double kTimeoutMs = 30;

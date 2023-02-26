@@ -31,7 +31,7 @@ static constexpr int kGrabberIntakeID = 6;
 static constexpr int kGrabberAngleID = 8;
 
 static constexpr int kArmRotateID = 3;
-static constexpr int kArmRetractID = 7;
+static constexpr int kArmRotateFollowerID = 7;
 static constexpr int kgoGoGadgetArmID = 10;
 
 double kSlotIdx = 0;

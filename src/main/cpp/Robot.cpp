@@ -56,10 +56,12 @@ public:
     frc::CameraServer::StartAutomaticCapture();
     //m_grabber.RobotInit();
     // Restore motor controller parameters to factory default
-    m_ArmRetract.RestoreFactoryDefaults();
+    m_ArmRotateFollower.RestoreFactoryDefaults();
     m_ArmRotate.RestoreFactoryDefaults();
     m_GrabberAngle.RestoreFactoryDefaults();
     m_GrabberIntake.RestoreFactoryDefaults();
+
+    m_ArmRotateFollower.Follow(m_ArmRotate, true);
 
     m_leftLeader.ConfigFactoryDefault();
     m_leftFollower.ConfigFactoryDefault();
@@ -289,7 +291,7 @@ public:
 
     //m_grabber.RunPeriodic();
     //fmt::print("Roll={}\n", navx->GetRoll());
-    //fmt::print("ArmRotation={}\n", m_ArmRotateEncoder.GetPosition());
+    fmt::print("ArmRotation={}\n", m_ArmRotateEncoder.GetPosition());
     //fmt::print("GrabberRotation={}\n", m_GrabberAngleEncoder.GetPosition());
 
     //______________________________________________________________________________________
@@ -311,12 +313,12 @@ public:
       
       }
       if (armCount % 3 == 1 && armRotateOn == true){
-        SetPointArmRotate = 13;
+        SetPointArmRotate = -2;
 
       } else if (armCount % 3 == 2 && armRotateOn == true){
-        SetPointArmRotate = 27;
+        SetPointArmRotate = -4;
       } else if (armCount % 3 == 0 && armRotateOn == true){
-        SetPointArmRotate = 40;
+        SetPointArmRotate = -6;
       }
       /**
        * As with other PID modes, Smart Motion is set by calling the
@@ -327,7 +329,6 @@ public:
         m_ArmRotatePidController.SetReference(SetPointArmRotate, rev::CANSparkMax::ControlType::kSmartMotion);
       }
       //ProcessVariableArmRotate = m_ArmRotateEncoder.GetPosition();
-    
 
     frc::SmartDashboard::PutNumber("Set Point", SetPointArmRotate);
     //frc::SmartDashboard::PutNumber("Process Variable", ProcessVariableArmRotate);
@@ -501,7 +502,7 @@ private:
 
   //Arm NEO motors
   rev::CANSparkMax m_ArmRotate{kArmRotateID, rev::CANSparkMax::MotorType::kBrushless};
-  rev::CANSparkMax m_ArmRetract{kArmRetractID, rev::CANSparkMax::MotorType::kBrushless};
+  rev::CANSparkMax m_ArmRotateFollower{kArmRotateFollowerID, rev::CANSparkMax::MotorType::kBrushless};
   TalonSRX m_rah = {kgoGoGadgetArmID};
 
   rev::SparkMaxRelativeEncoder m_ArmRotateEncoder = m_ArmRotate.GetEncoder();

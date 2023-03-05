@@ -30,9 +30,8 @@ static constexpr int kDriveRightFollower = 9;
 static constexpr int kGrabberIntakeID = 6;
 static constexpr int kGrabberAngleID = 8;
 
-static constexpr int kArmRotateID = 3;
-static constexpr int kArmRotateFollowerID = 7;
-static constexpr int kgoGoGadgetArmID = 10;
+
+double grabberStart = 0;
 
 double kSlotIdx = 0;
 

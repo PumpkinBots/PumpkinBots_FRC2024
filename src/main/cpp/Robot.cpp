@@ -55,6 +55,8 @@ public:
 
   void RobotInit() override {
     frc::CameraServer::StartAutomaticCapture();
+    frc::CameraServer::StartAutomaticCapture();
+
     //m_grabber.RobotInit();
     // Restore motor controller parameters to factory default
 
@@ -94,8 +96,8 @@ public:
     m_rightLeader.Config_kI(0, 0.0, 10);
     m_rightLeader.Config_kD(0, 0.0, 10);
 
-    m_rightLeader.ConfigMotionCruiseVelocity(4500, 10);
-    m_rightLeader.ConfigMotionAcceleration(1500, 10);
+    m_rightLeader.ConfigMotionCruiseVelocity(7000, 10);
+    m_rightLeader.ConfigMotionAcceleration(2000, 10);
 
     m_rightLeader.SetSelectedSensorPosition(0, 0, 10);
     
@@ -130,7 +132,6 @@ public:
     //All motors follow the right leader, left side's direction is inverted
 
 
-    m_GrabberAnglePidController.SetReference(0, rev::CANSparkMax::ControlType::kSmartMotion);
 
 
   }
@@ -139,25 +140,29 @@ public:
   {
     //Position of the right leader
     sensor = m_rightLeader.GetSensorCollection().GetQuadraturePosition();
-    if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.1_s){
+    if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.2_s){
       m_rightLeader.SetSelectedSensorPosition(0, 0, 10);
       rahSetPoint = 0;
-    } else if (m_timer.Get() >= 2_s && m_timer.Get() <= 2.01_s){
+    } else if (m_timer.Get() >= 2_s && m_timer.Get() <= 2.05_s){
     m_rightLeader.SetSelectedSensorPosition(0, 0, 10);
-    rahSetPoint = 14920 * (163.31/(6*M_PI));
+    rahSetPoint = 14920 * (161.375/(6*M_PI));
     ;
-  } else if (m_timer.Get() >= 8_s && m_timer.Get() <= 8.01_s) {
+  } else if (m_timer.Get() >= 7.7_s && m_timer.Get() <= 7.75_s) {
     m_rightLeader.SetSelectedSensorPosition(0, 0, 10);
-    rahSetPoint = -14920 * (71/(6*M_PI));
+    rahSetPoint = -14920 * (37/(6*M_PI));
   }
-
-  if (m_timer.Get() >= 1_s && m_timer.Get() <= 1.5_s){
+  if (m_timer.Get() >= 0_s && m_timer.Get() <= 1_s){
+    m_GrabberAnglePidController.SetReference(-4, rev::CANSparkMax::ControlType::kSmartMotion);
+  } else if (m_timer.Get() >= 1_s && m_timer.Get() <= 1.5_s){
     m_GrabberIntake.Set(-1);
+    m_GrabberAnglePidController.SetReference(-4, rev::CANSparkMax::ControlType::kSmartMotion);
   } else {
     m_GrabberIntake.Set(0);
+    m_GrabberAnglePidController.SetReference(0, rev::CANSparkMax::ControlType::kSmartMotion);
+
   }
 
-  if (m_timer.Get() >= 11_s) {
+  if (m_timer.Get() >= 10.0_s) {
     double xAxisRate          = 0;
     //pitchAngleDegrees is the angle the robot is at
     double pitchAngleDegrees  = navx->GetPitch();
@@ -201,7 +206,7 @@ public:
     m_leftLeader.SetInverted(InvertType::OpposeMaster);
     m_leftFollower.SetInverted(InvertType::OpposeMaster);
 
-  fmt::print("timer={}\n", m_timer.Get());
+  //fmt::print("timer={}\n", m_timer.Get());
 
   }
 
@@ -216,7 +221,7 @@ public:
 
     m_leftFollower.SetInverted(InvertType::FollowMaster);
 
-
+    SetPointGrabberAngle = 0;
     //m_rightFollower.Follow(m_rightLeader);
     //m_leftFollower.Follow(m_leftLeader);
   }
@@ -331,27 +336,31 @@ public:
       m_GrabberIntake.Set(0);
     }
 
-    double SetPointGrabberAngle;
     //, ProcessVariableGrabberAngle;
 
     // If the A button on the xbox controller is pressed, 
     // activate the angle motor on the grabber. 
-      SetPointGrabberAngle = grabberStart;
 
-      if (m_xbox.GetAButtonPressed()){
+      if (m_xbox.GetYButtonPressed()){
 
-        grabberCount += 1;
+        SetPointGrabberAngle = -3.345;
       
       }
-      if (grabberCount % 3 == 1){
-        SetPointGrabberAngle = -3.345;
+      if (m_xbox.GetBButtonPressed()){
 
-      } else if (grabberCount % 3 == 2){
-        SetPointGrabberAngle = 3.345;
-
-      } else if (grabberCount % 3 == 0){
-        SetPointGrabberAngle = grabberStart;
+        SetPointGrabberAngle = 0;
+      
       }
+      if (m_xbox.GetAButtonPressed()){
+
+        SetPointGrabberAngle = 3.345;
+      
+      }
+
+      if (m_GrabberAngleEncoder.GetPosition() > 5 || m_GrabberAngleEncoder.GetPosition() < -5){
+        SetPointGrabberAngle = 0;
+      }
+
       /**
        * As with other PID modes, Smart Motion is set by calling the
        * SetReference method on an existing pid object and setting
@@ -401,6 +410,9 @@ private:
 
   std::string m_buildVersion;
 
+  double SetPointGrabberAngle;
+
+
   // Slow drive starts as false, is enabled by pressing button 3
   bool m_slowDrive = false;
   // the balance mode in teleop starts as false, enabled by pressing button 4
@@ -432,6 +444,7 @@ private:
   constexpr static const double kOnBalanceThresholdDegrees  = 5.0f;
   bool autoBalanceXMode = false;
   bool autoBalanceYMode = false;
+  
 
   //Grabber motors
   //TalonSRX m_GrabberIntake = {kGrabberIntakeID};

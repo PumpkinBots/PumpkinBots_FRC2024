@@ -357,9 +357,7 @@ public:
       
       }
 
-      if (m_GrabberAngleEncoder.GetPosition() > 5 || m_GrabberAngleEncoder.GetPosition() < -5){
-        SetPointGrabberAngle = 0;
-      }
+
 
       /**
        * As with other PID modes, Smart Motion is set by calling the
@@ -370,6 +368,9 @@ public:
         m_GrabberAnglePidController.SetReference(SetPointGrabberAngle, rev::CANSparkMax::ControlType::kSmartMotion);
       }
       //ProcessVariableGrabberAngle = m_GrabberAngleEncoder.GetPosition();
+      if (m_GrabberAngleEncoder.GetPosition() > 5 || m_GrabberAngleEncoder.GetPosition() < -5){
+        m_GrabberAngle.Set(0);
+      }
 
   }
 

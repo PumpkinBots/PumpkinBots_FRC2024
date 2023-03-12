@@ -125,14 +125,9 @@ public:
 
   void AutonomousInit() override
   {
-    //Set timer to zero and start a stopwatch
+    //Set timer to zero and start counting
     m_timer.Reset();
     m_timer.Start();
-
-    //All motors follow the right leader, left side's direction is inverted
-
-
-
 
   }
 
@@ -250,7 +245,9 @@ public:
     const double deadband = 0.05;
     double speed = m_stick.GetY();
     //Rate limiter limits the acceleration of the turn speed to make it easier to control
-    double turn = m_turnRateLimiter.Calculate(m_stick.GetTwist());
+    //double turn = m_turnRateLimiter.Calculate(m_stick.GetTwist());
+    double turn =  ((m_stick.GetTwist())*(fabs(m_stick.GetTwist())));
+
 
     if (fabs(speed) < deadband) {
       speed = 0.0;
@@ -268,8 +265,8 @@ public:
     // They equal the exact output to the motor they are following. This is important because our gearboxes will never break
     // with this system. If a follower and leader were to go different directions, the robot won't be very happy. 
     if (m_slowDrive){
-      m_leftLeader.Set(ControlMode::PercentOutput, (0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, -(0.3)*m_stick.GetTwist());
-      m_rightLeader.Set(ControlMode::PercentOutput, (0.3)*speed, DemandType::DemandType_ArbitraryFeedForward,(0.3)*m_stick.GetTwist());
+      m_leftLeader.Set(ControlMode::PercentOutput, (0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, -(0.3)*turn);
+      m_rightLeader.Set(ControlMode::PercentOutput, (0.3)*speed, DemandType::DemandType_ArbitraryFeedForward,(0.3)*turn);
       m_leftFollower.Follow(m_leftLeader);
       m_rightFollower.Follow(m_rightLeader);
     } else {
@@ -278,45 +275,9 @@ public:
       m_leftFollower.Follow(m_leftLeader);
       m_rightFollower.Follow(m_rightLeader);
     }
-    //_____________________________________________________________________________
-    // Autobalance code. Exactly the same as it is in the autonomous section.
-    // Will hopefully be able to keep the robot balance while other robots drive onto the station
-    // at the end of a match. Will disable user inputs. 
-    /*
-    if (m_teleopBalance){
-
-          double xAxisRate          = 0;
-          double pitchAngleDegrees  = navx->GetPitch();
-
-          if ( !autoBalanceXMode &&
-              (fabs(pitchAngleDegrees) >=
-              fabs(kOffBalanceThresholdDegrees))) {
-            autoBalanceXMode = true;
-          }
-          else if ( autoBalanceXMode &&
-              (fabs(pitchAngleDegrees) <=
-              fabs(kOnBalanceThresholdDegrees))) {
-            autoBalanceXMode = false;
-          }
-
-          if ( autoBalanceXMode ) {
-            double pitchAngleRadians = pitchAngleDegrees * (M_PI / 180.0);
-            xAxisRate = sin(pitchAngleRadians) * -1;
-          }
-
-          m_leftLeader.Set(ControlMode::PercentOutput, -(0.6)*xAxisRate);
-          m_rightLeader.Set(ControlMode::PercentOutput,-(0.6)*xAxisRate);
-          m_leftFollower.Follow(m_leftLeader);
-          m_rightFollower.Follow(m_rightLeader);
-          //fmt::print("Speed={}\n", xAxisRate);
-      
-
-    }
-    */
-
 
 //_________________________________________________________________________________________________________
-//Grabber subsystem (Will be moved to a seperate file later)
+//Grabber subsystem
 
     m_runGrabberIntakeIn = m_xbox.GetLeftTriggerAxis() > 0.1;
     m_runGrabberIntakeOut = m_xbox.GetRightTriggerAxis() > 0.1;
@@ -336,10 +297,7 @@ public:
       m_GrabberIntake.Set(0);
     }
 
-    //, ProcessVariableGrabberAngle;
 
-    // If the A button on the xbox controller is pressed, 
-    // activate the angle motor on the grabber. 
 
       if (m_xbox.GetYButtonPressed()){
 
@@ -357,17 +315,9 @@ public:
       
       }
 
-
-
-      /**
-       * As with other PID modes, Smart Motion is set by calling the
-       * SetReference method on an existing pid object and setting
-       * the control type to kSmartMotion
-       */
       if (m_GrabberAngleEncoder.GetPosition() > SetPointGrabberAngle + 0.1 || m_GrabberAngleEncoder.GetPosition() < SetPointGrabberAngle - 0.1){
         m_GrabberAnglePidController.SetReference(SetPointGrabberAngle, rev::CANSparkMax::ControlType::kSmartMotion);
       }
-      //ProcessVariableGrabberAngle = m_GrabberAngleEncoder.GetPosition();
       if (m_GrabberAngleEncoder.GetPosition() > 5 || m_GrabberAngleEncoder.GetPosition() < -5){
         m_GrabberAngle.Set(0);
       }

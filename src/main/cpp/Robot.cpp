@@ -54,6 +54,9 @@ public:
   }
 
   void RobotInit() override {
+
+    frc::SmartDashboard::PutNumber("Auto mode", 0);
+
     frc::CameraServer::StartAutomaticCapture();
     frc::CameraServer::StartAutomaticCapture();
 
@@ -73,9 +76,9 @@ public:
 
 
     //m_rightLeader.ConfigFactoryDefault();
-    int absolutePosition = m_rightLeader.GetSensorCollection().GetPulseWidthPosition();
+    int absolutePositionRight = m_rightLeader.GetSensorCollection().GetPulseWidthPosition();
 /* use the low level API to set the quad encoder signal */
-		m_rightLeader.SetSelectedSensorPosition(absolutePosition, kPIDLoopIdx,
+		m_rightLeader.SetSelectedSensorPosition(absolutePositionRight, kPIDLoopIdx,
 				kTimeoutMs);
     m_rightLeader.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
 		m_rightLeader.SetSensorPhase(true);
@@ -105,6 +108,42 @@ public:
     m_rightLeader.SetStatusFramePeriod(StatusFrameEnhanced::Status_13_Base_PIDF0, 10, 10);
     m_rightLeader.SetStatusFramePeriod(StatusFrameEnhanced::Status_10_MotionMagic, 10, 10);
 
+
+    m_leftLeader.SetSelectedSensorPosition(0, 0, 10);
+
+
+    //m_rightLeader.ConfigFactoryDefault();
+    int absolutePositionLeft = m_rightLeader.GetSensorCollection().GetPulseWidthPosition();
+/* use the low level API to set the quad encoder signal */
+		m_leftLeader.SetSelectedSensorPosition(absolutePositionLeft, kPIDLoopIdx,
+				kTimeoutMs);
+    m_leftLeader.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
+		m_leftLeader.SetSensorPhase(true);
+
+    m_leftLeader.SetStatusFramePeriod(StatusFrameEnhanced::Status_13_Base_PIDF0, 10, 10);
+    m_leftLeader.SetStatusFramePeriod(StatusFrameEnhanced::Status_10_MotionMagic, 10, 10);
+
+		/* set the peak and nominal outputs, 12V means full */
+    m_leftLeader.ConfigNominalOutputForward(0, 10);
+    m_leftLeader.ConfigNominalOutputReverse(0, 10);
+    m_leftLeader.ConfigPeakOutputForward(1, 10);
+    m_leftLeader.ConfigPeakOutputReverse(-1, 10);
+
+		/* set closed loop gains in slot0 */
+    m_leftLeader.SelectProfileSlot(0, 0);
+    m_leftLeader.Config_kF(0, 0.3, 10);
+    m_leftLeader.Config_kP(0, 0.1, 10);
+    m_leftLeader.Config_kI(0, 0.0, 10);
+    m_leftLeader.Config_kD(0, 0.0, 10);
+
+    m_leftLeader.ConfigMotionCruiseVelocity(7000, 10);
+    m_leftLeader.ConfigMotionAcceleration(2000, 10);
+
+    m_leftLeader.SetSelectedSensorPosition(0, 0, 10);
+    
+    m_leftLeader.SetSensorPhase(true);
+    m_leftLeader.SetStatusFramePeriod(StatusFrameEnhanced::Status_13_Base_PIDF0, 10, 10);
+    m_leftLeader.SetStatusFramePeriod(StatusFrameEnhanced::Status_10_MotionMagic, 10, 10);
     // set PID coefficients
 
 
@@ -129,6 +168,8 @@ public:
     m_timer.Reset();
     m_timer.Start();
 
+    autoMode = frc::SmartDashboard::GetNumber("Auto mode", 0);
+
   }
 
   void AutonomousPeriodic() override
@@ -137,14 +178,15 @@ public:
     sensor = m_rightLeader.GetSensorCollection().GetQuadraturePosition();
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.2_s){
       m_rightLeader.SetSelectedSensorPosition(0, 0, 10);
+      m_leftLeader.SetSelectedSensorPosition(0, 0, 10);
+
       rahSetPoint = 0;
     } else if (m_timer.Get() >= 2_s && m_timer.Get() <= 2.05_s){
     m_rightLeader.SetSelectedSensorPosition(0, 0, 10);
+    m_leftLeader.SetSelectedSensorPosition(0, 0, 10);
+
     rahSetPoint = 14920 * (161.375/(6*M_PI));
     ;
-  } else if (m_timer.Get() >= 7.7_s && m_timer.Get() <= 7.75_s) {
-    m_rightLeader.SetSelectedSensorPosition(0, 0, 10);
-    rahSetPoint = -14920 * (37/(6*M_PI));
   }
   if (m_timer.Get() >= 0_s && m_timer.Get() <= 1_s){
     m_GrabberAnglePidController.SetReference(-4, rev::CANSparkMax::ControlType::kSmartMotion);
@@ -156,8 +198,14 @@ public:
     m_GrabberAnglePidController.SetReference(0, rev::CANSparkMax::ControlType::kSmartMotion);
 
   }
+  
+  double pitchAngleDegrees  = navx->GetPitch();
 
-  if (m_timer.Get() >= 10.0_s) {
+  if (fabs(pitchAngleDegrees) >= fabs(kOffBalanceThresholdDegreesActive) && m_timer.Get() >= 4_s && autoMode == 0){
+    autoBalance = true;
+  } 
+
+  if (autoBalance == true) {
     double xAxisRate          = 0;
     //pitchAngleDegrees is the angle the robot is at
     double pitchAngleDegrees  = navx->GetPitch();
@@ -188,18 +236,19 @@ public:
     // Set the drive speed of the robot to 60% of the speed we just calculated. This 60% may need to be changed again
     // once we test the autobalance code on the actual balance board.
     m_rightLeader.Set(ControlMode::PercentOutput, (0.6)*xAxisRate);
+    m_leftLeader.Set(ControlMode::PercentOutput, (0.6)*xAxisRate);
+
 
   } else {
     m_rightLeader.Set(ControlMode::MotionMagic, rahSetPoint);
+    m_leftLeader.Set(ControlMode::MotionMagic, -rahSetPoint);
+
 
 
   }
 
     m_rightFollower.Follow(m_rightLeader);
-    m_leftLeader.Follow(m_rightLeader);
-    m_leftFollower.Follow(m_rightLeader);
-    m_leftLeader.SetInverted(InvertType::OpposeMaster);
-    m_leftFollower.SetInverted(InvertType::OpposeMaster);
+    m_leftFollower.Follow(m_leftLeader);
 
   //fmt::print("timer={}\n", m_timer.Get());
 
@@ -207,7 +256,6 @@ public:
 
   void TeleopInit() override 
   {
-    m_turnRateLimiter.Reset(0);
 
     m_leftLeader.ConfigFactoryDefault();
     m_rightLeader.ConfigFactoryDefault();
@@ -223,15 +271,10 @@ public:
 
   void TeleopPeriodic() override
   {
-    // check to see if autobalance should be turned on. 
-    // mapped to button 4 on the drive controller
-    /*
-    if (m_stick.GetRawButtonPressed(4)){
-      m_teleopBalance = !m_teleopBalance;
-    }
-    */
 
 
+    m_leftFollower.Follow(m_leftLeader);
+    m_rightFollower.Follow(m_rightLeader);
     //______________________________________________________________________________
     //DRIVE SYSTEM
 
@@ -246,7 +289,8 @@ public:
     double speed = m_stick.GetY();
     //Rate limiter limits the acceleration of the turn speed to make it easier to control
     //double turn = m_turnRateLimiter.Calculate(m_stick.GetTwist());
-    double turn =  ((m_stick.GetTwist())*(fabs(m_stick.GetTwist())));
+    double turn = (0.5) * ((m_stick.GetTwist())*(fabs(m_stick.GetTwist())));
+    double turnLimit = turn * (-((fabs(speed)) / 2) + 1);
 
 
     if (fabs(speed) < deadband) {
@@ -265,13 +309,13 @@ public:
     // They equal the exact output to the motor they are following. This is important because our gearboxes will never break
     // with this system. If a follower and leader were to go different directions, the robot won't be very happy. 
     if (m_slowDrive){
-      m_leftLeader.Set(ControlMode::PercentOutput, (0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, -(0.3)*turn);
-      m_rightLeader.Set(ControlMode::PercentOutput, (0.3)*speed, DemandType::DemandType_ArbitraryFeedForward,(0.3)*turn);
+      m_leftLeader.Set(ControlMode::PercentOutput, -(0.3)*speed, DemandType::DemandType_ArbitraryFeedForward, (0.5)*turnLimit);
+      m_rightLeader.Set(ControlMode::PercentOutput, (0.3)*speed, DemandType::DemandType_ArbitraryFeedForward,(0.5)*turnLimit);
       m_leftFollower.Follow(m_leftLeader);
       m_rightFollower.Follow(m_rightLeader);
     } else {
-      m_leftLeader.Set(ControlMode::PercentOutput, speed, DemandType::DemandType_ArbitraryFeedForward, -turn * 0.5);
-      m_rightLeader.Set(ControlMode::PercentOutput, speed, DemandType::DemandType_ArbitraryFeedForward, turn * 0.5);
+      m_leftLeader.Set(ControlMode::PercentOutput, -speed, DemandType::DemandType_ArbitraryFeedForward, turnLimit);
+      m_rightLeader.Set(ControlMode::PercentOutput, speed, DemandType::DemandType_ArbitraryFeedForward, turnLimit);
       m_leftFollower.Follow(m_leftLeader);
       m_rightFollower.Follow(m_rightLeader);
     }
@@ -288,7 +332,7 @@ public:
       m_GrabberIntake.Set(0);
     } else if (m_runGrabberIntakeIn)
     {
-      m_GrabberIntake.Set(0.6);
+      m_GrabberIntake.Set(0.45);
 
     } else if (m_runGrabberIntakeOut)
     {
@@ -314,13 +358,30 @@ public:
         SetPointGrabberAngle = 3.345;
       
       }
+      if (m_xbox.GetXButtonPressed()){
+
+        SetPointGrabberAngle = 1.673;
+      
+      }
 
       if (m_GrabberAngleEncoder.GetPosition() > SetPointGrabberAngle + 0.1 || m_GrabberAngleEncoder.GetPosition() < SetPointGrabberAngle - 0.1){
         m_GrabberAnglePidController.SetReference(SetPointGrabberAngle, rev::CANSparkMax::ControlType::kSmartMotion);
       }
       if (m_GrabberAngleEncoder.GetPosition() > 5 || m_GrabberAngleEncoder.GetPosition() < -5){
         m_GrabberAngle.Set(0);
+        fmt::print("motordisabled={}\n", 1==1);
+
       }
+
+    //fmt::print("yawAngleDegrees={}\n", navx->GetYaw());
+    /*
+    if (m_stick.GetRawButtonPressed(4)){
+      navx->ZeroYaw();
+      yawAngleDegrees  = navx->GetYaw();
+      turnAround = !turnAround;
+      
+    }
+    */
 
   }
 
@@ -359,7 +420,7 @@ public:
 
 private:
 
-  std::string m_buildVersion;
+  double yawAngleDegrees  = 0;
 
   double SetPointGrabberAngle;
 
@@ -381,7 +442,6 @@ private:
   frc::XboxController m_xbox{1};
   
   //Set up slew rate limiter
-  frc::SlewRateLimiter<units::scalar> m_turnRateLimiter{1 / 1_s, 0};
 
   //exactly what you think, its a timer
   frc::Timer m_timer;
@@ -392,9 +452,13 @@ private:
   //Constants for autobalance, 10 degrees for off balance and 5 for on balance. 
   //I want to mess around with these constants at some point. 
   constexpr static const double kOffBalanceThresholdDegrees = 5.1f;
+  constexpr static const double kOffBalanceThresholdDegreesActive = 7.0f;
+
   constexpr static const double kOnBalanceThresholdDegrees  = 5.0f;
   bool autoBalanceXMode = false;
   bool autoBalanceYMode = false;
+
+  bool turnAround;
   
 
   //Grabber motors
@@ -440,6 +504,9 @@ private:
 	bool _lastButton1 = false;
 	/** save the target position to servo to */
 	double targetPositionRotations;
+
+  bool autoBalance = false;
+  int autoMode;
 
   // Allow the robot to access the data from the camera. 
   std::shared_ptr<nt::NetworkTable> table = nt::NetworkTableInstance::GetDefault().GetTable("limelight");

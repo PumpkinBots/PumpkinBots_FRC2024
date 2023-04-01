@@ -192,7 +192,7 @@ public:
     m_GrabberAnglePidController.SetReference(-4, rev::CANSparkMax::ControlType::kSmartMotion);
   } else if (m_timer.Get() >= 1_s && m_timer.Get() <= 1.5_s){
     m_GrabberIntake.Set(-1);
-    m_GrabberAnglePidController.SetReference(-4, rev::CANSparkMax::ControlType::kSmartMotion);
+    m_GrabberAnglePidController.SetReference(-3.5, rev::CANSparkMax::ControlType::kSmartMotion);
   } else {
     m_GrabberIntake.Set(0);
     m_GrabberAnglePidController.SetReference(0, rev::CANSparkMax::ControlType::kSmartMotion);
@@ -236,13 +236,19 @@ public:
     // Set the drive speed of the robot to 60% of the speed we just calculated. This 60% may need to be changed again
     // once we test the autobalance code on the actual balance board.
     m_rightLeader.Set(ControlMode::PercentOutput, (0.6)*xAxisRate);
-    m_leftLeader.Set(ControlMode::PercentOutput, (0.6)*xAxisRate);
+    m_leftLeader.Set(ControlMode::PercentOutput, -(0.6)*xAxisRate);
 
 
   } else {
-    m_rightLeader.Set(ControlMode::MotionMagic, rahSetPoint);
-    m_leftLeader.Set(ControlMode::MotionMagic, -rahSetPoint);
+      m_rightLeader.Set(ControlMode::MotionMagic, rahSetPoint);
+      m_leftLeader.Set(ControlMode::MotionMagic, -rahSetPoint);
 
+  } 
+
+  if (autoMode == 2){
+    m_rightLeader.Set(ControlMode::PercentOutput, 0);
+    m_leftLeader.Set(ControlMode::PercentOutput, 0);
+    fmt::print("STOP={}\n", 1==1);
 
 
   }
@@ -250,7 +256,6 @@ public:
     m_rightFollower.Follow(m_rightLeader);
     m_leftFollower.Follow(m_leftLeader);
 
-  //fmt::print("timer={}\n", m_timer.Get());
 
   }
 
@@ -296,6 +301,7 @@ public:
     if (fabs(speed) < deadband) {
       speed = 0.0;
     }
+    
 
     // If the autobalance code is enabled, disable the drive speed from user inputs
     if (m_teleopBalance){

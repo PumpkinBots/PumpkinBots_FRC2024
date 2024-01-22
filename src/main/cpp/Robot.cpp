@@ -473,7 +473,7 @@ private:
   rev::CANSparkMax m_GrabberIntake{kGrabberIntakeID, rev::CANSparkMax::MotorType::kBrushless};
   rev::CANSparkMax m_GrabberAngle{kGrabberAngleID, rev::CANSparkMax::MotorType::kBrushless};
 
-  rev::SparkMaxRelativeEncoder m_GrabberAngleEncoder = m_GrabberAngle.GetEncoder();
+  rev::SparkMaxRelativeEncoder m_GrabberAngleEncoder = m_GrabberAngle.GetEncoder(rev::SparkRelativeEncoder::Type::kHallSensor);
   rev::SparkMaxPIDController m_GrabberAnglePidController = m_GrabberAngle.GetPIDController();
 
   //Grabber constants

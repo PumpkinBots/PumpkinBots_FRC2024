@@ -16,32 +16,31 @@
 
 namespace OperatorConstants {
 
-constexpr int kDriverControllerPort = 0;
-
-
+constexpr int driverControllerPort = 0;
 
 }  // namespace OperatorConstants
+static constexpr int canLeftLeader = 0;
+static constexpr int canLeftFollower = 1;
+static constexpr int canRightLeader = 2;
+static constexpr int canRightFollower = 3;
 
-static constexpr int kDriveLeftLeader = 1;
-static constexpr int kDriveLeftFollower = 4;
-static constexpr int kDriveRightLeader = 2;
-static constexpr int kDriveRightFollower = 9;
+/*
+static constexpr int kGrabberArm = 8;
+static constexpr int kGrabberWrist = 9;
+static constexpr int kGrabberIntakeLeader = 10;
+static constexpr int kGrabberIntakeFollower = 11;
+*/
+//double grabberStart = 0;
 
-static constexpr int kGrabberIntakeID = 6;
-static constexpr int kGrabberAngleID = 8;
-
-
-double grabberStart = 0;
-
-double kSlotIdx = 0;
+//double kSlotIdx = 0;
 
 	/* Talon SRX/ Victor SPX will supported multiple (cascaded) PID loops.
 	 * For now we just want the primary one.
 	 */
-double kPIDLoopIdx = 0;
+//double kPIDLoopIdx = 0;
 
 	/*
 	 * set to zero to skip waiting for confirmation, set to nonzero to wait
 	 * and report to DS if action fails.
 	 */
-double kTimeoutMs = 30;
+//double kTimeoutMs = 30;

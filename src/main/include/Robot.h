@@ -13,9 +13,7 @@
 
 #include <frc/Joystick.h>
 #include <string>
-#include "ctre/Phoenix.h"
-
-
+#include "ctre/phoenix6/TalonFX.hpp"
 
 class Robot : public frc::TimedRobot {
  public:
@@ -27,6 +25,7 @@ class Robot : public frc::TimedRobot {
   void AutonomousPeriodic() override;
   void TeleopInit() override;
   void TeleopPeriodic() override;
+  void TestInit() override;
   void TestPeriodic() override;
   void SimulationInit() override;
   void SimulationPeriodic() override;
@@ -37,7 +36,5 @@ class Robot : public frc::TimedRobot {
   std::optional<frc2::CommandPtr> m_autonomousCommand;
 
   RobotContainer m_container;
-
-
 
 };

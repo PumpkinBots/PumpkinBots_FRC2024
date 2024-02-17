@@ -84,14 +84,6 @@ class Robot : public frc::TimedRobot {
     double targetSkew = table->GetNumber("ts",0.0);
 
   public:
-    /*
-    Robot() {
-      // Set up gyro
-      // FIXME - shouldn't this be in RobotInit() ?
-      navx = new AHRS(frc::SPI::Port::kMXP);
-      m_timer.Start();
-    }
-    */
 
     /*
     * Runs once at code initialization.
@@ -103,12 +95,14 @@ class Robot : public frc::TimedRobot {
       frc::CameraServer::StartAutomaticCapture();
       frc::CameraServer::StartAutomaticCapture();
 
-      configs::TalonFXConfiguration fx_cfg{};
-
-      // Set up gyro
-      // FIXME - shouldn't this be in RobotInit() ?
+      /* set up gyro */
       navx = new AHRS(frc::SPI::Port::kMXP);
       m_timer.Start();
+
+      /**
+       * DRIVE MOTOR CONFIGURATION
+      */
+      configs::TalonFXConfiguration fx_cfg{};
 
       /* the left motor is CCW+ */
       fx_cfg.MotorOutput.Inverted = signals::InvertedValue::CounterClockwise_Positive;
@@ -123,36 +117,14 @@ class Robot : public frc::TimedRobot {
       rightFollower.SetControl(controls::Follower{rightLeader.GetDeviceID(), false});
     }
 
-    /**
-     * FIXME
-    */
-    //void RobotPeriodic() {}
-
-    /**
-     * Runs when transitioning from enabled to disabled,
-     * including after robot startup.
-     */
-    //void DisabledInit() {}
-
-    /**
-     * Runs periodically while disabled.
-     */
-    
     void DisabledPeriodic() {
       leftLeader.SetControl(controls::NeutralOut{});
       rightLeader.SetControl(controls::NeutralOut{});
     }
-    
-
-    //void AutonomousInit() override;
-
-    //void AutonomousPeriodic() override;
-
-    //void TeleopInit() override;
 
     void TeleopPeriodic() override {
       /**
-       * SLOW MODE
+       * SLOW DRIVE
        * Button three on the joystick toggles "slow drive" mode.
        * In this mode, the robot's drive and turn speed are limited to the slowFactor value.
       */
@@ -162,19 +134,21 @@ class Robot : public frc::TimedRobot {
       const double slowFactor = 0.3;
 
       /**
-       * JITTER CORRECTION
-       * throw out any inputs less than deadband value
+       * SPEED
+       * jitter correction: throw out any inputs less than the deadband value
       */
       const double deadband = 0.05;
       double speed = (fabs(speed) > deadband) ? joy.GetY() : 0.0;
       
-      /* taking half of the signed square of the twist...
-          must be a really slow turn by default */
+      /**
+       * TURN
+       * taking half of the signed square of the twist... must be a really slow turn by default
+      */
       double turn = (0.5) * ((joy.GetTwist())*(fabs(joy.GetTwist())));
       double turnLimit = turn * (-((fabs(speed)) / 2) + 1);
       
       /**
-       * set drive outputs
+       * DRIVE OUTPUT (speed + turn)
        * FIXME: not sure how to apply turnLimit here
       */
       leftOut.Output = slowDrive ? slowFactor*(speed + turn) : speed + turn; // 
@@ -184,14 +158,6 @@ class Robot : public frc::TimedRobot {
       rightLeader.SetControl(rightOut);
 
     }
-
-    //void TestInit() override;
-
-    //void TestPeriodic() override;
-    
-    //void SimulationInit() override;
-    
-    //void SimulationPeriodic() override;
 
 };
 

@@ -14,15 +14,25 @@
  * they are needed.
  */
 
+/**
+ * ctl : Control namespace (eg joystick, xbox)
+ * can : CANBUS namespace (addresses)
+ * drv : Drive namespace
+ * fun : Functional namespace (eg arm)
+*/
+
+
 namespace OperatorConstants {
 
 constexpr int driverControllerPort = 0;
 
 }  // namespace OperatorConstants
-static constexpr int canLeftLeader = 0;
-static constexpr int canLeftFollower = 1;
-static constexpr int canRightLeader = 2;
-static constexpr int canRightFollower = 3;
+
+namespace can {
+static constexpr int leftLeader = 0;
+static constexpr int leftFollower = 1;
+static constexpr int rightLeader = 2;
+static constexpr int rightFollower = 3;
 
 /*
 static constexpr int kGrabberArm = 8;
@@ -30,6 +40,7 @@ static constexpr int kGrabberWrist = 9;
 static constexpr int kGrabberIntakeLeader = 10;
 static constexpr int kGrabberIntakeFollower = 11;
 */
+}
 //double grabberStart = 0;
 
 //double kSlotIdx = 0;

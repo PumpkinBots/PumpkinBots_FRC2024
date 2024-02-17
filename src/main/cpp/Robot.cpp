@@ -28,6 +28,7 @@
 //motors
 #include "rev/CANSparkMax.h"
 #include "ctre/phoenix6/TalonFX.hpp"
+#include "ctre/phoenix6/unmanaged/Unmanaged.hpp" // for FeedEnable
 
 //camera
 #include <cameraserver/CameraServer.h>
@@ -39,7 +40,8 @@
 //local
 #include "Constants.h"
 
-using namespace ctre::phoenix6;
+//using namespace ctre::phoenix6;
+namespace phx = ctre::phoenix6;
 
 class Robot : public frc::TimedRobot {
   private:
@@ -53,18 +55,19 @@ class Robot : public frc::TimedRobot {
     static constexpr char const *CAN = "*";
 
     /* devices */
-    hardware::TalonFX leftLeader{canLeftLeader, CAN};
-    hardware::TalonFX leftFollower{canLeftFollower, CAN};
-    hardware::TalonFX rightLeader{canRightLeader, CAN};
-    hardware::TalonFX rightFollower{canRightFollower, CAN};
+    phx::hardware::TalonFX leftLeader{can::leftLeader, CAN};
+    phx::hardware::TalonFX leftFollower{can::leftFollower, CAN};
+    phx::hardware::TalonFX rightLeader{can::rightLeader, CAN};
+    phx::hardware::TalonFX rightFollower{can::rightFollower, CAN};
 
     /* control requests */
-    controls::DutyCycleOut leftOut{0};
-    controls::DutyCycleOut rightOut{0};
+    phx::controls::DutyCycleOut leftOut{0};
+    phx::controls::DutyCycleOut rightOut{0};
 
 
     /* joystick USB port connection (assigned in driver station)
       Make sure these are correctly assigned in the driver station, if they aren't the robot can't read any inputs */
+      // FIXME - convert to ctl namespace (in header?)
     frc::Joystick joy{0};
     frc::XboxController xbox{1};
     
@@ -102,24 +105,27 @@ class Robot : public frc::TimedRobot {
       /**
        * DRIVE MOTOR CONFIGURATION
       */
-      configs::TalonFXConfiguration fx_cfg{};
+
+      ctre::phoenix::unmanaged::FeedEnable(100);
+
+      phx::configs::TalonFXConfiguration fx_cfg{};
 
       /* the left motor is CCW+ */
-      fx_cfg.MotorOutput.Inverted = signals::InvertedValue::CounterClockwise_Positive;
+      fx_cfg.MotorOutput.Inverted = phx::signals::InvertedValue::CounterClockwise_Positive;
       leftLeader.GetConfigurator().Apply(fx_cfg);
 
       /* the right motor is CW+ */
-      fx_cfg.MotorOutput.Inverted = signals::InvertedValue::Clockwise_Positive;
+      fx_cfg.MotorOutput.Inverted = phx::signals::InvertedValue::Clockwise_Positive;
       rightLeader.GetConfigurator().Apply(fx_cfg);
 
       /* set follower motors to follow leaders; do NOT oppose the leaders' inverts */
-      leftFollower.SetControl(controls::Follower{leftLeader.GetDeviceID(), false});
-      rightFollower.SetControl(controls::Follower{rightLeader.GetDeviceID(), false});
+      leftFollower.SetControl(phx::controls::Follower{leftLeader.GetDeviceID(), false});
+      rightFollower.SetControl(phx::controls::Follower{rightLeader.GetDeviceID(), false});
     }
 
     void DisabledPeriodic() {
-      leftLeader.SetControl(controls::NeutralOut{});
-      rightLeader.SetControl(controls::NeutralOut{});
+      leftLeader.SetControl(phx::controls::NeutralOut{});
+      rightLeader.SetControl(phx::controls::NeutralOut{});
     }
 
     void TeleopPeriodic() override {

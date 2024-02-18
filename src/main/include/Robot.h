@@ -4,37 +4,107 @@
 
 #pragma once
 
-#include <optional>
-
-#include <frc/TimedRobot.h>
-#include <frc2/command/CommandPtr.h>
-
-#include "RobotContainer.h"
-
-#include <frc/Joystick.h>
+//core
+#include <fstream>
 #include <string>
-#include "ctre/phoenix6/TalonFX.hpp"
+#include <sstream>
+#include <units/dimensionless.h>
+#include <fmt/core.h>
+#include <networktables/NetworkTable.h>
+#include <networktables/NetworkTableInstance.h>
+#include <networktables/NetworkTableEntry.h>
+#include <networktables/NetworkTableValue.h>
+
+//frc
+#include <frc/Filesystem.h>
+#include <frc/Joystick.h>
+#include <frc/XboxController.h>
+#include <frc/TimedRobot.h>
+#include <frc/Timer.h>
+#include <frc/drive/DifferentialDrive.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+#include <frc/smartdashboard/SendableChooser.h>
+#include <frc/filter/SlewRateLimiter.h>
+
+//motors
+#include <rev/CANSparkMax.h>
+#include <ctre/phoenix6/TalonFX.hpp>
+
+//camera
+#include <cameraserver/CameraServer.h>
+
+//gryo
+#include <AHRS.h>
+#include <frc/SerialPort.h>
+
+//local
+#include <Constants.h>
+
+namespace phx = ctre::phoenix6;
 
 class Robot : public frc::TimedRobot {
- public:
-  void RobotInit() override;
-  void RobotPeriodic() override;
-  void DisabledInit() override;
-  void DisabledPeriodic() override;
-  void AutonomousInit() override;
-  void AutonomousPeriodic() override;
-  void TeleopInit() override;
-  void TeleopPeriodic() override;
-  void TestInit() override;
-  void TestPeriodic() override;
-  void SimulationInit() override;
-  void SimulationPeriodic() override;
-
  private:
-  // Have it empty by default so that if testing teleop it
-  // doesn't have undefined behavior and potentially crash.
-  std::optional<frc2::CommandPtr> m_autonomousCommand;
+  static constexpr char const *CAN{"rio"};
 
-  RobotContainer m_container;
+  phx::hardware::TalonFX leftLeader{can::leftLeader, CAN};
+  phx::hardware::TalonFX leftFollower{can::leftFollower, CAN};
+  phx::hardware::TalonFX rightLeader{can::rightLeader, CAN};
+  phx::hardware::TalonFX rightFollower{can::rightFollower, CAN};
+  
+  phx::controls::DutyCycleOut leftOut{0}; // Initialize output to 0%
+  phx::controls::DutyCycleOut rightOut{0}; // Initialize output to 0%
 
+  int printCount{};
+
+  // Slow drive starts as false, is enabled by pressing button 3
+  bool slowDrive = false;
+
+  /* joystick USB port connection (assigned in driver station)
+    Make sure these are correctly assigned in the driver station, if they aren't the robot can't read any inputs */
+
+  frc::Joystick joystick{0};
+  //frc::Joystick joy{0};
+  //frc::XboxController xbox{1};
+  
+  //Set up slew rate limiter
+
+  //exactly what you think, its a timer
+  frc::Timer m_timer;
+
+  //Set up gyro
+  AHRS *navx;
+
+  // Allow the robot to access the data from the camera. 
+  std::shared_ptr<nt::NetworkTable> table = nt::NetworkTableInstance::GetDefault().GetTable("limelight");
+  double targetOffsetAngle_Horizontal = table->GetNumber("tx",0.0);
+  double targetOffsetAngle_Vertical = table->GetNumber("ty",0.0);
+  double targetArea = table->GetNumber("ta",0.0);
+  double targetSkew = table->GetNumber("ts",0.0);
+
+ public:
+  Robot () {
+      /* set up gyro */
+      navx = new AHRS(frc::SPI::Port::kMXP);
+
+      /* start timer */
+      m_timer.Start();
+  }
+
+  void RobotInit() override;
+  //void RobotPeriodic() override;
+
+  //void AutonomousInit() override;
+  //void AutonomousPeriodic() override;
+
+  //void TeleopInit() override;
+  void TeleopPeriodic() override;
+
+  //void DisabledInit() override;
+  void DisabledPeriodic() override;
+
+  //void TestInit() override;
+  //void TestPeriodic() override;
+
+  //void SimulationInit() override;
+  //void SimulationPeriodic() override;
 };

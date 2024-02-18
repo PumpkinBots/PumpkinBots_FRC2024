@@ -69,7 +69,7 @@ void Robot::TeleopPeriodic() {
    * jitter correction: throw out any inputs less than the deadband value
   */
   const double deadband = 0.05;
-  double speed = (fabs(speed) > deadband) ? joystick.GetY() : 0.0;
+  double speed = (fabs(joystick.GetY()) > deadband) ? joystick.GetY() : 0.0;
   
   /**
    * TURN

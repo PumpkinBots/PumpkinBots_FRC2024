@@ -90,23 +90,23 @@ void Robot::TeleopPeriodic() {
   /**
    * TURNING
    * taking half of the signed square of the twist to reduce the impact on speed (raw output should always be in the range of -1:1)
-   * eg twist = -0.5 gives a turn of -0.125
-   *    twist = 1.0 gives a turn of 0.5
-   * limitedTurn should slow the turning rate at speed for better controllability - can revert to turn based on driver feedback (or convert to a switched mode)
-   * eg speed = 0 gives a limitedTurn = turn
-   *    speed = 1 gives a limitedTurn = 0.5 * turn
+   * eg twist = -0.5 -> turn = -0.125
+   *    twist = 1.0 -> turn = 0.5
+   * speedTurn should slow the turning rate at speed for better controllability - can revert to turn based on driver feedback (or convert to a switched mode)
+   * eg speed = 0 -> speedTurn = turn
+   *    speed = 1 -> speedTurn = 0.5 * turn
   */
   double turn = (0.5) * ((joystick.GetTwist())*(fabs(joystick.GetTwist())));
-  double limitedTurn = turn * (-((fabs(speed)) / 2) + 1);
+  double speedTurn = turn * (-((fabs(speed)) / 2) + 1);
   
   /**
-   * DRIVE OUTPUT (speed + limitedTurn)
+   * DRIVE OUTPUT (speed + speedTurn)
    * The existing calculation will result in even less aggressive turning at max speed due to effectively saturating the leading drive motor.
-   * It might be better to cap speed + limitedTurn at 1/-1
+   * It might be better to cap speed + speedTurn at 1/-1
    * or it might be better to leave as-is as it further limits turning at speed
   */
-  leftOut.Output = slowDrive ? slowFactor*(speed - limitedTurn) : speed - limitedTurn;
-  rightOut.Output = slowDrive ? slowFactor*(speed + limitedTurn) : speed + limitedTurn; 
+  leftOut.Output = slowDrive ? slowFactor*(speed - speedTurn) : speed - speedTurn;
+  rightOut.Output = slowDrive ? slowFactor*(speed + speedTurn) : speed + speedTurn; 
 
   leftLeader.SetControl(leftOut);
   rightLeader.SetControl(rightOut);

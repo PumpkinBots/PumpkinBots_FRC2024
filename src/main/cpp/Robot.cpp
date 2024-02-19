@@ -23,13 +23,23 @@ void Robot::RobotInit() {
   /**
    * DRIVE MOTOR CONFIGURATION
   */
+
+  /* configure voltage */
+  /*
+  // class member variable
+  controls::VoltageOut m_request{0_V};
+
+  // main robot code, command 12 V output
+  m_motor.SetControl(m_request.WithOutput(12_V));
+  */
+
   /* Configure devices */
   phx::configs::TalonFXConfiguration leftConfiguration{};
   phx::configs::TalonFXConfiguration rightConfiguration{};
 
   /* User can optionally change the configs, or leave it alone to perform a factory default */
-  leftConfiguration.MotorOutput.Inverted = false;
-  rightConfiguration.MotorOutput.Inverted = true;
+  leftConfiguration.MotorOutput.Inverted = true;
+  rightConfiguration.MotorOutput.Inverted = false;
 
   leftLeader.GetConfigurator().Apply(leftConfiguration);
   leftFollower.GetConfigurator().Apply(leftConfiguration);
@@ -73,17 +83,20 @@ void Robot::TeleopPeriodic() {
   
   /**
    * TURN
-   * taking half of the signed square of the twist... must be a really slow turn by default
+   * taking half of the signed square of the twist to reduce the impact on speed (raw output should always be in the range of -1:1)
+   * eg twist = -0.5 gives a turn of -0.125
+   * eg twist = 1.0 gives a turn of 0.5
   */
   double turn = (0.5) * ((joystick.GetTwist())*(fabs(joystick.GetTwist())));
-  double turnLimit = turn * (-((fabs(speed)) / 2) + 1);
+  
+  /*`limitedTurn` should slow the turning rate at speed for better controllability - can revert to `turn` based on driver feedback (or convert to a switched mode) */
+  double limitedTurn = turn * (-((fabs(speed)) / 2) + 1);
   
   /**
-   * DRIVE OUTPUT (speed + turn)
-   * FIXME: not sure how to apply turnLimit here
+   * DRIVE OUTPUT (speed + limitedTurn)
   */
-  leftOut.Output = slowDrive ? slowFactor*(speed + turn) : speed + turn; // 
-  rightOut.Output = slowDrive ? slowFactor*(speed + turn) : speed + turn; // not sure how to apply turnLimit here
+  leftOut.Output = slowDrive ? slowFactor*(speed - limitedTurn) : speed - limitedTurn;
+  rightOut.Output = slowDrive ? slowFactor*(speed + limitedTurn) : speed + limitedTurn; 
 
   leftLeader.SetControl(leftOut);
   rightLeader.SetControl(rightOut);

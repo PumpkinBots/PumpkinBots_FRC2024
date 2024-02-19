@@ -46,6 +46,15 @@ class Robot : public frc::TimedRobot {
  private:
   static constexpr char const *CAN{"rio"};
 
+  /**
+   * CONFIGURE DRIVE MOTORS
+   * FIXME: voltageControl is UNTESTED
+   */
+
+  /* Voltage control */
+  phx::controls::VoltageOut voltageControl{0_V};
+
+  /* Drive configuration */
   phx::hardware::TalonFX leftLeader{can::leftLeader, CAN};
   phx::hardware::TalonFX leftFollower{can::leftFollower, CAN};
   phx::hardware::TalonFX rightLeader{can::rightLeader, CAN};
@@ -63,7 +72,6 @@ class Robot : public frc::TimedRobot {
     Make sure these are correctly assigned in the driver station, if they aren't the robot can't read any inputs */
 
   frc::Joystick joystick{0};
-  //frc::Joystick joy{0};
   //frc::XboxController xbox{1};
   
   //Set up slew rate limiter

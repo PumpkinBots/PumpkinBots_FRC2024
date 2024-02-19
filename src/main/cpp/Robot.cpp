@@ -22,22 +22,23 @@ void Robot::RobotInit() {
 
   /**
    * DRIVE MOTOR CONFIGURATION
+   * FIXME: convert the 12_V assignment and motor inversion configuration below to a for-each loop
+   *        eg with a struct of driveMotors, split between left and right
+   *        this should also be extended to arm and elbow motors
+   * FIXME: voltageControl is UNTESTED
   */
+  
+  /* Voltage control */
+  leftLeader.SetControl(voltageControl.WithOutput(12_V));
+  leftFollower.SetControl(voltageControl.WithOutput(12_V));
+  rightLeader.SetControl(voltageControl.WithOutput(12_V));
+  rightFollower.SetControl(voltageControl.WithOutput(12_V));
 
-  /* configure voltage */
-  /*
-  // class member variable
-  controls::VoltageOut m_request{0_V};
-
-  // main robot code, command 12 V output
-  m_motor.SetControl(m_request.WithOutput(12_V));
-  */
-
-  /* Configure devices */
+  /* Drive configuration */
   phx::configs::TalonFXConfiguration leftConfiguration{};
   phx::configs::TalonFXConfiguration rightConfiguration{};
 
-  /* User can optionally change the configs, or leave it alone to perform a factory default */
+  /* Controls which end of the robot is front - these should always be set in opposition */
   leftConfiguration.MotorOutput.Inverted = true;
   rightConfiguration.MotorOutput.Inverted = false;
 
@@ -45,17 +46,24 @@ void Robot::RobotInit() {
   leftFollower.GetConfigurator().Apply(leftConfiguration);
   rightLeader.GetConfigurator().Apply(rightConfiguration);
   rightFollower.GetConfigurator().Apply(rightConfiguration);
-    
-  /* Currently in simulation, we do not support FOC, so disable it while simulating */
+  
+  /* Set up followers to follow leaders and retain the leaders' inversion settings */
+  leftFollower.SetControl(phx::controls::Follower{leftLeader.GetDeviceID(), false});
+  rightFollower.SetControl(phx::controls::Follower{rightLeader.GetDeviceID(), false});
+
+  /**
+   * FIXME: we don't have Phoenix Pro, so FOC should be disabled everywhere or just ignored
+   * commented out for now, should be removed.
+   */
+  
+  /*
   if (ctre::phoenix6::IsSimulation())
   {
     leftOut.EnableFOC = false;
     rightOut.EnableFOC = false;
   }
+  */
 
-  /* Set up followers to follow leaders */
-  leftFollower.SetControl(phx::controls::Follower{leftLeader.GetDeviceID(), false});
-  rightFollower.SetControl(phx::controls::Follower{rightLeader.GetDeviceID(), false});
 }
 
 void Robot::DisabledPeriodic() {
@@ -66,12 +74,10 @@ void Robot::DisabledPeriodic() {
 void Robot::TeleopPeriodic() {
   /**
    * SLOW DRIVE
-   * Button three on the joystick toggles "slow drive" mode.
+   * Button three on the joystick toggles slow drive mode.
    * In this mode, the robot's drive and turn speed are limited to the slowFactor value.
   */
-  if (joystick.GetRawButtonPressed(3)){
-    slowDrive = !slowDrive;
-  }
+  slowDrive = (joystick.GetRawButtonPressed(3)) ? !slowDrive : slowDrive;
   const double slowFactor = 0.3;
 
   /**
@@ -82,18 +88,22 @@ void Robot::TeleopPeriodic() {
   double speed = (fabs(joystick.GetY()) > deadband) ? joystick.GetY() : 0.0;
   
   /**
-   * TURN
+   * TURNING
    * taking half of the signed square of the twist to reduce the impact on speed (raw output should always be in the range of -1:1)
    * eg twist = -0.5 gives a turn of -0.125
-   * eg twist = 1.0 gives a turn of 0.5
+   *    twist = 1.0 gives a turn of 0.5
+   * limitedTurn should slow the turning rate at speed for better controllability - can revert to turn based on driver feedback (or convert to a switched mode)
+   * eg speed = 0 gives a limitedTurn = turn
+   *    speed = 1 gives a limitedTurn = 0.5 * turn
   */
   double turn = (0.5) * ((joystick.GetTwist())*(fabs(joystick.GetTwist())));
-  
-  /*`limitedTurn` should slow the turning rate at speed for better controllability - can revert to `turn` based on driver feedback (or convert to a switched mode) */
   double limitedTurn = turn * (-((fabs(speed)) / 2) + 1);
   
   /**
    * DRIVE OUTPUT (speed + limitedTurn)
+   * The existing calculation will result in even less aggressive turning at max speed due to effectively saturating the leading drive motor.
+   * It might be better to cap speed + limitedTurn at 1/-1
+   * or it might be better to leave as-is as it further limits turning at speed
   */
   leftOut.Output = slowDrive ? slowFactor*(speed - limitedTurn) : speed - limitedTurn;
   rightOut.Output = slowDrive ? slowFactor*(speed + limitedTurn) : speed + limitedTurn; 

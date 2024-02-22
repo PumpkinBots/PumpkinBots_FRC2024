@@ -2,6 +2,9 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
+//core
+#include <fmt/core.h>
+
 //frc
 #include <frc/TimedRobot.h>
 
@@ -10,8 +13,8 @@
 
 namespace phx = ctre::phoenix6;
 
-/*
-* Runs once at code initialization.
+/**
+ * Runs once at code initialization.
 */
 void Robot::RobotInit() {
 
@@ -25,14 +28,16 @@ void Robot::RobotInit() {
    * FIXME: convert the 12_V assignment and motor inversion configuration below to a for-each loop
    *        eg with a struct of driveMotors, split between left and right
    *        this should also be extended to arm and elbow motors
-   * FIXME: voltageControl is UNTESTED
+   * FIXME: voltageControl is UNTESTED and should not be necessary using *DutyCycle calls
   */
   
   /* Voltage control */
+  /*
   leftLeader.SetControl(voltageControl.WithOutput(12_V));
   leftFollower.SetControl(voltageControl.WithOutput(12_V));
   rightLeader.SetControl(voltageControl.WithOutput(12_V));
   rightFollower.SetControl(voltageControl.WithOutput(12_V));
+  */
 
   /* Drive configuration */
   phx::configs::TalonFXConfiguration leftConfiguration{};
@@ -42,6 +47,7 @@ void Robot::RobotInit() {
   leftConfiguration.MotorOutput.Inverted = true;
   rightConfiguration.MotorOutput.Inverted = false;
 
+  /* Apply configuration */
   leftLeader.GetConfigurator().Apply(leftConfiguration);
   leftFollower.GetConfigurator().Apply(leftConfiguration);
   rightLeader.GetConfigurator().Apply(rightConfiguration);
@@ -50,19 +56,6 @@ void Robot::RobotInit() {
   /* Set up followers to follow leaders and retain the leaders' inversion settings */
   leftFollower.SetControl(phx::controls::Follower{leftLeader.GetDeviceID(), false});
   rightFollower.SetControl(phx::controls::Follower{rightLeader.GetDeviceID(), false});
-
-  /**
-   * FIXME: we don't have Phoenix Pro, so FOC should be disabled everywhere or just ignored
-   * commented out for now, should be removed.
-   */
-  
-  /*
-  if (ctre::phoenix6::IsSimulation())
-  {
-    leftOut.EnableFOC = false;
-    rightOut.EnableFOC = false;
-  }
-  */
 
 }
 
@@ -74,11 +67,14 @@ void Robot::DisabledPeriodic() {
 void Robot::TeleopPeriodic() {
   /**
    * SLOW DRIVE
-   * Button three on the joystick toggles slow drive mode.
-   * In this mode, the robot's drive and turn speed are limited to the slowFactor value.
+   * Button three on the joystick toggles slow drive mode which sets maxSpeed to 30% output
+   * The robot's combined drive and turn speed are limited to the maxSpeed value.
   */
-  slowDrive = (joystick.GetRawButtonPressed(3)) ? !slowDrive : slowDrive;
-  const double slowFactor = 0.3;
+  if (joystick.GetRawButtonPressed(3)) {
+    slowDrive = !slowDrive;
+    fmt::print("limited maxSpeed: ", slowDrive);
+  }
+  const double maxSpeed = slowDrive ? 0.3 : 1.0;
 
   /**
    * SPEED
@@ -96,7 +92,7 @@ void Robot::TeleopPeriodic() {
    * eg speed = 0 -> speedTurn = turn
    *    speed = 1 -> speedTurn = 0.5 * turn
   */
-  double turn = (0.5) * ((joystick.GetTwist())*(fabs(joystick.GetTwist())));
+  double turn = 0.5 * ((joystick.GetTwist()) * (fabs(joystick.GetTwist())));
   double speedTurn = turn * (-((fabs(speed)) / 2) + 1);
   
   /**
@@ -104,12 +100,78 @@ void Robot::TeleopPeriodic() {
    * The existing calculation will result in even less aggressive turning at max speed due to effectively saturating the leading drive motor.
    * It might be better to cap speed + speedTurn at 1/-1
    * or it might be better to leave as-is as it further limits turning at speed
+   * FIXME: explore alternate implementations of turning + speed to make it as smooth and predictable as possible for the driver
   */
-  leftOut.Output = slowDrive ? slowFactor*(speed - speedTurn) : speed - speedTurn;
-  rightOut.Output = slowDrive ? slowFactor*(speed + speedTurn) : speed + speedTurn; 
+  leftOut.Output = maxSpeed * (speed - speedTurn);
+  rightOut.Output = maxSpeed * (speed + speedTurn); 
 
   leftLeader.SetControl(leftOut);
   rightLeader.SetControl(rightOut);
+
+  /**
+   * Robot starts in "home" position - arm down, and intake folded up, rollers locked
+   * button 1 (intake sequence): moves the wrist so the intake is ready to pick up a note, and spins rollers inward until a note is detected. Then stops the rollers, and returns to home.
+   * button 2 (scoring part 1): moves the arm up, and adjusts the wrist so it aligns with the amp.
+   * button 3 (scoring part 2 or set down note):
+   *   First checks if the arm is home.
+   *     No --> action 1
+   *     Yes --> action 2
+   *     action 1: spins intake motors to eject the note into the amp and returns to home
+   *     action 2: moves the wrist to deploy the intake, spins the rollers in reverse to "set down the note", and returns to home.
+   * button 4 (climbing position): moves the arm up, but keeps the intake in home position to expose climbing hooks.
+   * button 5 (force home or finish climb): returns all systems to home. If the hooks are on the chain, this is the final climb sequence.
+  */
+
+  /**
+   * ARM/WRIST OUTPUT
+  */
+  switch (mechMode) {
+    case Mech::Home :
+      arm.SetPosition(arm::home);
+      wrist.SetPosition(wrist::home);
+      break;
+
+    case Mech::Intake :
+      arm.SetPosition(arm::intake);
+      wrist.SetPosition(wrist::intake);
+      // intake motors to pick up note (+ direction), stop intake at beam break; -- would this be a blocking call? is that good or bad?
+      mechMode = Mech::Home; // reset to home for note transport
+      break;
+
+    case Mech::Delivery :
+      arm.SetPosition(arm::amp);
+      wrist.SetPosition(wrist::amp);
+      break;
+
+    case Mech::AmpScore :
+      arm.SetPosition(arm::amp);
+      wrist.SetPosition(wrist::amp);
+      // intake motors to deliver note into amp (+ direction)
+      mechMode = Mech::Home; // reset to home
+      break;
+
+    case Mech::Release :
+      arm.SetPosition(arm::intake);
+      wrist.SetPosition(wrist::intake);
+      // intake motors release note onto ground (- direction)
+      break;
+
+    case Mech::Climb :
+      arm.SetPosition(arm::climb);
+      wrist.SetPosition(wrist::climb);
+      // if button(5) {mechMode = Mech::Home}
+      break;
+
+    default : // probably unnecessary
+      arm.SetPosition(arm::home);
+      wrist.SetPosition(wrist::home);
+
+  }
+  //arm.SetPosition(arm::home);
+  //auto& talonFXPositionSignal = arm.GetPosition(); // TODO: print this, move the motor, reprint, power off, repeat
+  //fmt::print(talonFXPositionSignal.GetValueAsDouble);
+  
+
 
 }
 

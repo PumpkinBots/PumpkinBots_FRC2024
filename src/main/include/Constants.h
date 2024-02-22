@@ -18,40 +18,50 @@
  * ctl : Control namespace (eg joystick, xbox)
  * can : CANBUS namespace (addresses)
  * drv : Drive namespace
- * fun : Functional namespace (eg arm)
+ * arm : Functional namespace
+ * wrist : Functional namespace
 */
 
+//namespace OperatorConstants {
 
-namespace OperatorConstants {
+//constexpr int driverControllerPort = 0;
 
-constexpr int driverControllerPort = 0;
+//}  // namespace OperatorConstants
 
-}  // namespace OperatorConstants
+#include <units/angle.h>
+
+using rot = units::angle::turn_t;
 
 namespace can {
-static constexpr int leftLeader = 0;
-static constexpr int leftFollower = 1;
-static constexpr int rightLeader = 2;
-static constexpr int rightFollower = 3;
+	static constexpr int leftLeader = 0;
+	static constexpr int leftFollower = 1;
+	static constexpr int rightLeader = 2;
+	static constexpr int rightFollower = 3;
 
-/*
-static constexpr int kGrabberArm = 8;
-static constexpr int kGrabberWrist = 9;
-static constexpr int kGrabberIntakeLeader = 10;
-static constexpr int kGrabberIntakeFollower = 11;
-*/
+	/* reserve addresses 4:7 for swerve drive */
+
+	static constexpr int arm = 8;
+	static constexpr int wrist = 9;
+	static constexpr int intakeLeader = 10;
+	static constexpr int intakeFollower = 11;
 }
-//double grabberStart = 0;
 
-//double kSlotIdx = 0;
+/**
+ * FIXME: all of the definitions below DO NOT account for gear ratios - they will need to be adjusted
+ * eg gearOut = 60;
+*/
+namespace arm {
+	static constexpr double gearOut = 1.0; // gearIn is assumed 1
+	static constexpr rot home = (rot) gearOut * 0.0; // `static constexpr rot home = gearOut*0.0_tr;` doesn't work
+    static constexpr rot intake = (rot) gearOut * 0.0;
+	static constexpr rot amp = (rot) gearOut * 100/360;
+	static constexpr rot climb = (rot) gearOut * 90/360;
+}
 
-	/* Talon SRX/ Victor SPX will supported multiple (cascaded) PID loops.
-	 * For now we just want the primary one.
-	 */
-//double kPIDLoopIdx = 0;
-
-	/*
-	 * set to zero to skip waiting for confirmation, set to nonzero to wait
-	 * and report to DS if action fails.
-	 */
-//double kTimeoutMs = 30;
+namespace wrist {
+	static constexpr double gearOut = 1.0; // gearIn is assumed 1
+	static constexpr rot home = (rot) gearOut * 150/360;
+    static constexpr rot intake = (rot) gearOut * 0.0;
+	static constexpr rot amp = (rot) gearOut * 35/360;
+	static constexpr rot climb = (rot) gearOut * 150/360;
+}

@@ -126,19 +126,19 @@ void Robot::TeleopPeriodic() {
    * ARM/WRIST OUTPUT
   */
   switch (mechMode) {
-    case Mech::Home :
+    case Mech::Home : // BUTTON_5
       arm.SetPosition(arm::home);
       wrist.SetPosition(wrist::home);
       break;
 
-    case Mech::Intake :
+    case Mech::Intake : // BUTTON_1
       arm.SetPosition(arm::intake);
       wrist.SetPosition(wrist::intake);
       // intake motors to pick up note (+ direction), stop intake at beam break; -- would this be a blocking call? is that good or bad?
       mechMode = Mech::Home; // reset to home for note transport
       break;
 
-    case Mech::Delivery :
+    case Mech::Delivery : // BUTTON_2
       arm.SetPosition(arm::amp);
       wrist.SetPosition(wrist::amp);
       break;
@@ -156,10 +156,10 @@ void Robot::TeleopPeriodic() {
       // intake motors release note onto ground (- direction)
       break;
 
-    case Mech::Climb :
+    case Mech::Climb : // BUTTON_4
       arm.SetPosition(arm::climb);
       wrist.SetPosition(wrist::climb);
-      // if button(5) {mechMode = Mech::Home}
+      // if BUTTON_5 {mechMode = Mech::Home}
       break;
 
     default : // probably unnecessary

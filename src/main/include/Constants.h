@@ -49,9 +49,14 @@ namespace can {
 /**
  * FIXME: all of the definitions below DO NOT account for gear ratios - they will need to be adjusted
  * eg gearOut = 60;
+ * the wrist is 1:1 
+ * speed of the output shaft on the gearbox = speed of the wrist rotation
+ * the rollers are 30:24 or 5:4 // this shouldn't matter much
+ * and the arm is 52:10 or 26:5 
+ * so whatever gearbox you guys use for the arm, for every time that rotates once, the arm will rotate about 1/5 of a rotation
 */
 namespace arm {
-	static constexpr double gearOut = 1.0; // gearIn is assumed 1
+	static constexpr double gearOut = 1.0; // gearIn is assumed 1 -- this needs to encompass the 26:5 belt drive ratio
 	static constexpr rot home = (rot) gearOut * 0.0; // `static constexpr rot home = gearOut*0.0_tr;` doesn't work
     static constexpr rot intake = (rot) gearOut * 0.0;
 	static constexpr rot amp = (rot) gearOut * 100/360;
@@ -59,7 +64,7 @@ namespace arm {
 }
 
 namespace wrist {
-	static constexpr double gearOut = 1.0; // gearIn is assumed 1
+	static constexpr double gearOut = 1.0; // gearIn is assumed 1 -- belt drive ratio is 1:1
 	static constexpr rot home = (rot) gearOut * 150/360;
     static constexpr rot intake = (rot) gearOut * 0.0;
 	static constexpr rot amp = (rot) gearOut * 35/360;

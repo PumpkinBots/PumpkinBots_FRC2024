@@ -125,6 +125,9 @@ void Robot::TeleopPeriodic() {
   /**
    * ARM/WRIST OUTPUT
   */
+  if (xbox.GetRawButtonPressed(1)) {
+    mechMode = Mech::Climb;
+  }
   switch (mechMode) {
     case Mech::Home : // BUTTON_5
       arm.SetPosition(arm::home);

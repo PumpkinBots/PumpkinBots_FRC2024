@@ -92,7 +92,7 @@ class Robot : public frc::TimedRobot {
       Make sure these are correctly assigned in the driver station, if they aren't the robot can't read any inputs */
 
     frc::Joystick joystick{0};
-    //frc::XboxController xbox{1};
+    frc::XboxController xbox{1};
     
     //Set up slew rate limiter
 

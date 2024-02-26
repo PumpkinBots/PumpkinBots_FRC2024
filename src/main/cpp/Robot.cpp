@@ -40,23 +40,27 @@ void Robot::RobotInit() {
   */
 
   /* Drive configuration */
-  phx::configs::TalonFXConfiguration leftConfiguration{};
-  phx::configs::TalonFXConfiguration rightConfiguration{};
+  phx::configs::TalonFXConfiguration leftConf{};
+  phx::configs::TalonFXConfiguration rightConf{};
 
   /* Controls which end of the robot is front - these should always be set in opposition */
-  leftConfiguration.MotorOutput.Inverted = true;
-  rightConfiguration.MotorOutput.Inverted = false;
+  leftConf.MotorOutput.Inverted = true;
+  rightConf.MotorOutput.Inverted = false;
 
   /* Apply configuration */
-  leftLeader.GetConfigurator().Apply(leftConfiguration);
-  leftFollower.GetConfigurator().Apply(leftConfiguration);
-  rightLeader.GetConfigurator().Apply(rightConfiguration);
-  rightFollower.GetConfigurator().Apply(rightConfiguration);
+  leftLeader.GetConfigurator().Apply(leftConf);
+  leftFollower.GetConfigurator().Apply(leftConf);
+  rightLeader.GetConfigurator().Apply(rightConf);
+  rightFollower.GetConfigurator().Apply(rightConf);
   
   /* Set up followers to follow leaders and retain the leaders' inversion settings */
   leftFollower.SetControl(phx::controls::Follower{leftLeader.GetDeviceID(), false});
   rightFollower.SetControl(phx::controls::Follower{rightLeader.GetDeviceID(), false});
 
+  /* set up the arm and wrist */
+  phx::configs::TalonFXConfiguration armConf{};
+  phx::configs::MotionMagicConfigs &mmArmConf = armConf.MotionMagic;
+  arm.GetConfigurator().Apply(armConf);
 }
 
 void Robot::DisabledPeriodic() {
@@ -125,56 +129,68 @@ void Robot::TeleopPeriodic() {
   /**
    * ARM/WRIST OUTPUT
   */
-  if (xbox.GetRawButtonPressed(1)) {
+  
+  /* xbox input (mech) */
+  if (xbox.GetRawButtonPressed(1)) { // A
+    mechMode = Mech::Home;
+  } else if (xbox.GetRawButtonPressed(2)) { //B
+    mechMode = Mech::Intake;
+  } else if (xbox.GetRawButtonPressed(3)) { //X
+    mechMode = Mech::Release;
+  } else if (xbox.GetRawButtonPressed(4)) { //Y
     mechMode = Mech::Climb;
+  } else if (xbox.GetRawButtonPressed(5)) { //L1
+    mechMode = Mech::Delivery;
+  } else if (xbox.GetRawButtonPressed(6)) { //R1
+    mechMode = Mech::AmpScore;
   }
+
+  beamBreak = false;
+
   switch (mechMode) {
-    case Mech::Home : // BUTTON_5
-      arm.SetPosition(arm::home);
-      wrist.SetPosition(wrist::home);
+    case Mech::Home :
+      arm.SetControl(mmArm.WithPosition(arm::home));
+      wrist.SetControl(mmWrist.WithPosition(wrist::home));
       break;
 
-    case Mech::Intake : // BUTTON_1
-      arm.SetPosition(arm::intake);
-      wrist.SetPosition(wrist::intake);
-      // intake motors to pick up note (+ direction), stop intake at beam break; -- would this be a blocking call? is that good or bad?
-      mechMode = Mech::Home; // reset to home for note transport
+    case Mech::Intake :
+      arm.SetControl(mmArm.WithPosition(arm::intake));
+      wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+      // intake motors on
+      // if (beamBreak) {
+        // intake motors off
+        // mechMode = Mech::Home; // reset to home for note transport
+        //}
       break;
 
-    case Mech::Delivery : // BUTTON_2
-      arm.SetPosition(arm::amp);
-      wrist.SetPosition(wrist::amp);
+    case Mech::Delivery :
+      arm.SetControl(mmArm.WithPosition(arm::amp));
+      wrist.SetControl(mmWrist.WithPosition(wrist::amp));
       break;
 
     case Mech::AmpScore :
-      arm.SetPosition(arm::amp);
-      wrist.SetPosition(wrist::amp);
+      arm.SetControl(mmArm.WithPosition(arm::amp));
+      wrist.SetControl(mmWrist.WithPosition(wrist::amp));
       // intake motors to deliver note into amp (+ direction)
       mechMode = Mech::Home; // reset to home
       break;
 
     case Mech::Release :
-      arm.SetPosition(arm::intake);
-      wrist.SetPosition(wrist::intake);
+      arm.SetControl(mmArm.WithPosition(arm::intake));
+      wrist.SetControl(mmWrist.WithPosition(wrist::intake));
       // intake motors release note onto ground (- direction)
       break;
 
-    case Mech::Climb : // BUTTON_4
-      arm.SetPosition(arm::climb);
-      wrist.SetPosition(wrist::climb);
-      // if BUTTON_5 {mechMode = Mech::Home}
+    case Mech::Climb :
+      arm.SetControl(mmArm.WithPosition(arm::climb));
+      wrist.SetControl(mmWrist.WithPosition(wrist::climb));
       break;
 
     default : // probably unnecessary
-      arm.SetPosition(arm::home);
-      wrist.SetPosition(wrist::home);
+      arm.SetControl(mmArm.WithPosition(arm::home));
+      wrist.SetControl(mmWrist.WithPosition(wrist::home));
 
   }
-  //arm.SetPosition(arm::home);
-  //auto& talonFXPositionSignal = arm.GetPosition(); // TODO: print this, move the motor, reprint, power off, repeat
-  //fmt::print(talonFXPositionSignal.GetValueAsDouble);
-  
-
 
 }
 

@@ -68,19 +68,11 @@ class Robot : public frc::TimedRobot {
      * CONFIGURE ARM/WRIST MOTORS
     */
 
-    /* Arm and Wrist configuration */
-    /*
-    frc::DigitalInput armForwardLimit{arm::forwardLimit};
-    frc::DigitalInput armReverseLimit{arm::reverseLimit};
-    frc::DigitalInput wristForwardLimit{wrist::forwardLimit};
-    frc::DigitalInput wristReverseLimit{wrist::reverseLimit};
-    */
-
     phx::hardware::TalonFX arm{can::arm, CAN};
     phx::hardware::TalonFX wrist{can::wrist, CAN};
 
-    phx::controls::DutyCycleOut armOut{0};
-    phx::controls::DutyCycleOut wristOut{0};
+    phx::controls::MotionMagicExpoDutyCycle mmArm{arm::home};
+    phx::controls::MotionMagicExpoDutyCycle mmWrist{wrist::home};
 
     enum class Mech {Home, Intake, Delivery, AmpScore, Release, Climb};
     Mech mechMode = Mech::Home;
@@ -94,6 +86,8 @@ class Robot : public frc::TimedRobot {
     frc::Joystick joystick{0};
     frc::XboxController xbox{1};
     
+    // intake sensor
+    bool beamBreak = false;
     //Set up slew rate limiter
 
     //exactly what you think, its a timer

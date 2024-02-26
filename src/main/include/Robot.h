@@ -76,6 +76,8 @@ class Robot : public frc::TimedRobot {
 
     enum class Mech {Home, Intake, Delivery, AmpScore, Release, Climb};
     Mech mechMode = Mech::Home;
+    bool armMoving = false;
+    bool wristMoving = false;
 
     // Slow drive starts as false, is enabled by pressing button 3
     bool slowDrive = false;

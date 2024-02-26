@@ -172,66 +172,111 @@ void Robot::TeleopPeriodic() {
 
   beamBreak = false;
 
-
-  if (!arm.GetMotionMagicIsRunning().GetStatus()) {
-    switch (mechMode) {
-      case Mech::Home :
+  switch (mechMode) {
+    case Mech::Home :
+      if (!armMoving && arm.GetPosition().GetValue() != arm::home) {
         arm.SetControl(mmArm.WithPosition(arm::home).WithSlot(0));
-        //arm.SetPosition(arm::home);
-        //wrist.SetControl(mmWrist.WithPosition(wrist::home));
-        fmt::print("mechMode = Mech::Home - position: ", arm::home, "/n");
-        break;
+        armMoving = true;
+      } else if (arm.GetPosition().GetValue() == arm::home) {
+        armMoving = false;
+      } // else wait for it to finish moving - this has failure modes
 
-      case Mech::Intake :
+      //arm.SetPosition(arm::home);
+      //wrist.SetControl(mmWrist.WithPosition(wrist::home));
+      //fmt::print("mechMode = Mech::Home - position: ", arm::home, "/n");
+      break;
+
+    case Mech::Intake :
+      if (!armMoving && arm.GetPosition().GetValue() != arm::intake) {
         arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
-        //arm.SetPosition(arm::intake);
-        //wrist.SetControl(mmWrist.WithPosition(wrist::intake));
-        fmt::print("mechMode = Mech::Intake - position: ", arm::intake, "/n");
-        // intake motors on
-        // if (beamBreak) {
-          // intake motors off
-          // mechMode = Mech::Home; // reset to home for note transport
-          //}
-        break;
+        armMoving = true;
+      } else if (arm.GetPosition().GetValue() == arm::intake) {
+        armMoving = false;
+      }
+      //arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
 
-      case Mech::Delivery :
-        arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
-        //arm.SetPosition(arm::amp);
-        //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
-        fmt::print("mechMode = Mech::Delivery - position: ", arm::amp, "/n");
-        break;
+      //arm.SetPosition(arm::intake);
+      //wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+      //fmt::print("mechMode = Mech::Intake - position: ", arm::intake, "/n");
+      // intake motors on
+      // if (beamBreak) {
+        // intake motors off
+        // mechMode = Mech::Home; // reset to home for note transport
+        //}
+      break;
 
-      case Mech::AmpScore :
+    case Mech::Delivery :
+      if (!armMoving && arm.GetPosition().GetValue() != arm::amp) {
         arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
-        //arm.SetPosition(arm::amp); // this should be unnecessary
-        //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
-        fmt::print("mechMode = Mech::AmpScore - position: ", arm::amp, "/n");
+        armMoving = true;
+      } else if (arm.GetPosition().GetValue() == arm::amp) {
+        armMoving = false;
+      }
+      //arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
+
+      //arm.SetPosition(arm::amp);
+      //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+      //fmt::print("mechMode = Mech::Delivery - position: ", arm::amp, "/n");
+      break;
+
+    case Mech::AmpScore :
+      if (!armMoving && arm.GetPosition().GetValue() != arm::amp) {
+        arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
+        armMoving = true;
+      } else if (arm.GetPosition().GetValue() == arm::amp) {
         // intake motors to deliver note into amp (+ direction)
+        armMoving = false;
         mechMode = Mech::Home; // reset to home
-        break;
+      }
+      //arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
 
-      case Mech::Release :
+      //arm.SetPosition(arm::amp); // this should be unnecessary
+      //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+      //fmt::print("mechMode = Mech::AmpScore - position: ", arm::amp, "/n");
+      // intake motors to deliver note into amp (+ direction)
+      //mechMode = Mech::Home; // reset to home
+      break;
+
+    case Mech::Release :
+      if (!armMoving && arm.GetPosition().GetValue() != arm::intake) {
         arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
-        //arm.SetPosition(arm::release);
-        //wrist.SetControl(mmWrist.WithPosition(wrist::intake));
-        fmt::print("mechMode = Mech::Release - position: ", arm::intake, "/n");
-        // intake motors release note onto ground (- direction)
-        break;
+        armMoving = true;
+      } else if (arm.GetPosition().GetValue() == arm::intake) {
+        armMoving = false;
+      }
+      //arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
 
-      case Mech::Climb :
+      //arm.SetPosition(arm::release);
+      //wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+      //fmt::print("mechMode = Mech::Release - position: ", arm::intake, "/n");
+      // intake motors release note onto ground (- direction)
+      break;
+
+    case Mech::Climb :
+      if (!armMoving && arm.GetPosition().GetValue() != arm::climb) {
         arm.SetControl(mmArm.WithPosition(arm::climb).WithSlot(0));
-        //arm.SetPosition(arm::climb);
-        //wrist.SetControl(mmWrist.WithPosition(wrist::climb));
-        fmt::print("mechMode = Mech::Climb - position: ", arm::climb, "/n");
-        break;
+        armMoving = true;
+      } else if (arm.GetPosition().GetValue() == arm::climb) {
+        armMoving = false;
+      }
+      //arm.SetControl(mmArm.WithPosition(arm::climb).WithSlot(0));
 
-      default : // probably unnecessary
+      //arm.SetPosition(arm::climb);
+      //wrist.SetControl(mmWrist.WithPosition(wrist::climb));
+      //fmt::print("mechMode = Mech::Climb - position: ", arm::climb, "/n");
+      break;
+
+    default : // probably unnecessary
+      if (!armMoving && arm.GetPosition().GetValue() != arm::home) {
         arm.SetControl(mmArm.WithPosition(arm::home).WithSlot(0));
-        //arm.SetPosition(arm::home);
-        //wrist.SetControl(mmWrist.WithPosition(wrist::home));
-        fmt::print("default \n");
+        armMoving = true;
+      } else if (arm.GetPosition().GetValue() == arm::home) {
+        armMoving = false;
+      }
+      //arm.SetPosition(arm::home);
+      //wrist.SetControl(mmWrist.WithPosition(wrist::home));
+      //fmt::print("default \n");
 
-    }
   }
 
 }

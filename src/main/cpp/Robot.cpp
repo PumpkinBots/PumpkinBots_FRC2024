@@ -131,19 +131,19 @@ void Robot::TeleopPeriodic() {
   */
   
   /* xbox input (mech) */
-  if (xbox.GetAButtonPressed()) { //GetRawButtonPressed(1)) { // A
+  if (xbox.GetAButton()) { //GetRawButtonPressed(1)) { // A
     mechMode = Mech::Home;
-  } else if (xbox.GetBButtonPressed()) { //.GetRawButtonPressed(2)) { //B
+  } else if (xbox.GetBButton()) { //.GetRawButtonPressed(2)) { //B
     mechMode = Mech::Intake;
-  } else if (xbox.GetXButtonPressed()) { //.GetRawButtonPressed(3)) { //X
+  } else if (xbox.GetXButton()) { //.GetRawButtonPressed(3)) { //X
     mechMode = Mech::Release;
-  } else if (xbox.GetYButtonPressed()) { //.GetRawButtonPressed(4)) { //Y
+  } else if (xbox.GetYButton()) { //.GetRawButtonPressed(4)) { //Y
     mechMode = Mech::Climb;
-  } else if (xbox.GetLeftBumperPressed()) { //.GetRawButtonPressed(5)) { //L1
+  } else if (xbox.GetLeftBumper()) { //.GetRawButtonPressed(5)) { //L1
     mechMode = Mech::Delivery;
-  } else if (xbox.GetRightBumperPressed()) { //.GetRawButtonPressed(6)) { //R1
+  } else if (xbox.GetRightBumper()) { //.GetRawButtonPressed(6)) { //R1
     mechMode = Mech::AmpScore;
-  } else if (xbox.GetStartButtonPressed()) { //reset current position to 'home' <- this might be a bad idea
+  } else if (xbox.GetStartButton()) { //reset current position to 'home' <- this might be a bad idea
     arm.SetPosition(arm::home);
     wrist.SetPosition(wrist::home);
   }
@@ -152,13 +152,15 @@ void Robot::TeleopPeriodic() {
 
   switch (mechMode) {
     case Mech::Home :
-      arm.SetControl(mmArm.WithPosition(arm::home));
-      wrist.SetControl(mmWrist.WithPosition(wrist::home));
+      //arm.SetControl(mmArm.WithPosition(arm::home));
+      //wrist.SetControl(mmWrist.WithPosition(wrist::home));
+      fmt::print("mechMode = Mech::Home \n");
       break;
 
     case Mech::Intake :
-      arm.SetControl(mmArm.WithPosition(arm::intake));
-      wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+      //arm.SetControl(mmArm.WithPosition(arm::intake));
+      //wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+      fmt::print("mechMode = Mech::Intake \n");
       // intake motors on
       // if (beamBreak) {
         // intake motors off
@@ -167,31 +169,36 @@ void Robot::TeleopPeriodic() {
       break;
 
     case Mech::Delivery :
-      arm.SetControl(mmArm.WithPosition(arm::amp));
-      wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+      //arm.SetControl(mmArm.WithPosition(arm::amp));
+      //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+      fmt::print("mechMode = Mech::Delivery \n");
       break;
 
     case Mech::AmpScore :
-      arm.SetControl(mmArm.WithPosition(arm::amp));
-      wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+      //arm.SetControl(mmArm.WithPosition(arm::amp));
+      //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+      fmt::print("mechMode = Mech::AmpScore \n");
       // intake motors to deliver note into amp (+ direction)
       mechMode = Mech::Home; // reset to home
       break;
 
     case Mech::Release :
-      arm.SetControl(mmArm.WithPosition(arm::intake));
-      wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+      //arm.SetControl(mmArm.WithPosition(arm::intake));
+      //wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+      fmt::print("mechMode = Mech::Release \n");
       // intake motors release note onto ground (- direction)
       break;
 
     case Mech::Climb :
-      arm.SetControl(mmArm.WithPosition(arm::climb));
-      wrist.SetControl(mmWrist.WithPosition(wrist::climb));
+      //arm.SetControl(mmArm.WithPosition(arm::climb));
+      //wrist.SetControl(mmWrist.WithPosition(wrist::climb));
+      fmt::print("mechMode = Mech::Climb \n");
       break;
 
     default : // probably unnecessary
-      arm.SetControl(mmArm.WithPosition(arm::home));
-      wrist.SetControl(mmWrist.WithPosition(wrist::home));
+      //arm.SetControl(mmArm.WithPosition(arm::home));
+      //wrist.SetControl(mmWrist.WithPosition(wrist::home));
+      fmt::print("default \n");
 
   }
 

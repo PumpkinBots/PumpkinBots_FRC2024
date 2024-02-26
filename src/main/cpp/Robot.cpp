@@ -59,7 +59,11 @@ void Robot::RobotInit() {
 
   /* set up the arm and wrist */
   phx::configs::TalonFXConfiguration armConf{};
-  phx::configs::MotionMagicConfigs &mmArmConf = armConf.MotionMagic;
+  //phx::configs::MotionMagicConfigs &mmArmConf = armConf.MotionMagic;
+  auto& mmArmConf = armConf.MotionMagic;
+  mmArmConf.MotionMagicCruiseVelocity = 80;
+  mmArmConf.MotionMagicAcceleration = 160;
+  mmArmConf.MotionMagicJerk = 1600;
   arm.GetConfigurator().Apply(armConf);
 }
 
@@ -152,7 +156,7 @@ void Robot::TeleopPeriodic() {
 
   switch (mechMode) {
     case Mech::Home :
-      //arm.SetControl(mmArm.WithPosition(arm::home));
+      arm.SetControl(mmArm.WithPosition(arm::home));
       //wrist.SetControl(mmWrist.WithPosition(wrist::home));
       fmt::print("mechMode = Mech::Home \n");
       break;
@@ -169,7 +173,7 @@ void Robot::TeleopPeriodic() {
       break;
 
     case Mech::Delivery :
-      //arm.SetControl(mmArm.WithPosition(arm::amp));
+      arm.SetControl(mmArm.WithPosition(arm::amp));
       //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
       fmt::print("mechMode = Mech::Delivery \n");
       break;

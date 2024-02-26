@@ -59,7 +59,7 @@ namespace can {
 namespace arm {
 	static constexpr double gearOut = 60.0 * (52/10); // gearIn is assumed 1 -- this needs to encompass the 52:10 belt drive ratio
 	static constexpr rot home = (rot) gearOut * 0.0;
-    static constexpr rot intake = (rot) gearOut * 0.0;
+	static constexpr rot intake = (rot) gearOut * 0.0;
 	static constexpr rot amp = (rot) gearOut * 100/360;
 	static constexpr rot climb = (rot) gearOut * 90/360;
 }
@@ -67,7 +67,7 @@ namespace arm {
 namespace wrist {
 	static constexpr double gearOut = 60.0; // gearIn is assumed 1 -- belt drive ratio is 1:1
 	static constexpr rot home = (rot) gearOut * 150/360;
-    static constexpr rot intake = (rot) gearOut * 0.0;
+	static constexpr rot intake = (rot) gearOut * 0.0;
 	static constexpr rot amp = (rot) gearOut * 35/360;
 	static constexpr rot climb = (rot) gearOut * 150/360;
 }

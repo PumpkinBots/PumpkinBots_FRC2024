@@ -57,7 +57,7 @@ namespace can {
  * so whatever gearbox you guys use for the arm, for every time that rotates once, the arm will rotate about 1/5 of a rotation
 */
 namespace arm {
-	static constexpr double gearOut = 60.0 * (52/10); // gearIn is assumed 1 -- this needs to encompass the 52:10 belt drive ratio
+	static constexpr double gearOut = 60.0 * 52/10; // gearIn is assumed 1 -- this needs to encompass the 52:10 belt drive ratio
 	static constexpr rot home = (rot) gearOut * 0.0;
 	static constexpr rot intake = (rot) gearOut * 0.0;
 	static constexpr rot amp = (rot) gearOut * 100/360;

@@ -60,21 +60,19 @@ void Robot::RobotInit() {
 
   /* set up the arm and wrist */
   phx::configs::TalonFXConfiguration armConf{};
-  //phx::configs::MotionMagicConfigs &mmArmConf = armConf.MotionMagic;
 
   /* why is "slot0" necessary - extremely poor documentation */
   auto& slot0Configs = armConf.Slot0;
-  slot0Configs.kS = 0.25; // Add 0.25 V output to overcome static friction
+  slot0Configs.kS = 0.05; // Add 0.25 V output to overcome static friction
   slot0Configs.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   slot0Configs.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
   slot0Configs.kP = 0; // A position error of 2.5 rotations results in 12 V output
   slot0Configs.kI = 0; // no output for integrated error
   slot0Configs.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
-
   auto& mmArmConf = armConf.MotionMagic;
-  mmArmConf.MotionMagicCruiseVelocity = 80;
-  mmArmConf.MotionMagicAcceleration = 160;
+  mmArmConf.MotionMagicCruiseVelocity = 5; //80? 100
+  mmArmConf.MotionMagicAcceleration = 10; //160?
   mmArmConf.MotionMagicJerk = 1600;
   //arm.GetConfigurator().Apply(armConf);
   ctre::phoenix::StatusCode status = ctre::phoenix::StatusCode::StatusCodeNotInitialized;
@@ -174,56 +172,66 @@ void Robot::TeleopPeriodic() {
 
   beamBreak = false;
 
-  switch (mechMode) {
-    case Mech::Home :
-      arm.SetControl(mmArm.WithPosition(arm::home).WithSlot(0));
-      //wrist.SetControl(mmWrist.WithPosition(wrist::home));
-      fmt::print("mechMode = Mech::Home - position: ", arm::home, "/n");
-      break;
 
-    case Mech::Intake :
-      arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
-      //wrist.SetControl(mmWrist.WithPosition(wrist::intake));
-      fmt::print("mechMode = Mech::Intake - position: ", arm::intake, "/n");
-      // intake motors on
-      // if (beamBreak) {
-        // intake motors off
-        // mechMode = Mech::Home; // reset to home for note transport
-        //}
-      break;
+  if (!arm.GetMotionMagicIsRunning().GetStatus()) {
+    switch (mechMode) {
+      case Mech::Home :
+        arm.SetControl(mmArm.WithPosition(arm::home).WithSlot(0));
+        //arm.SetPosition(arm::home);
+        //wrist.SetControl(mmWrist.WithPosition(wrist::home));
+        fmt::print("mechMode = Mech::Home - position: ", arm::home, "/n");
+        break;
 
-    case Mech::Delivery :
-      arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
-      //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
-      fmt::print("mechMode = Mech::Delivery - position: ", arm::amp, "/n");
-      break;
+      case Mech::Intake :
+        arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
+        //arm.SetPosition(arm::intake);
+        //wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+        fmt::print("mechMode = Mech::Intake - position: ", arm::intake, "/n");
+        // intake motors on
+        // if (beamBreak) {
+          // intake motors off
+          // mechMode = Mech::Home; // reset to home for note transport
+          //}
+        break;
 
-    case Mech::AmpScore :
-      arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
-      //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
-      fmt::print("mechMode = Mech::AmpScore - position: ", arm::amp, "/n");
-      // intake motors to deliver note into amp (+ direction)
-      mechMode = Mech::Home; // reset to home
-      break;
+      case Mech::Delivery :
+        arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
+        //arm.SetPosition(arm::amp);
+        //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+        fmt::print("mechMode = Mech::Delivery - position: ", arm::amp, "/n");
+        break;
 
-    case Mech::Release :
-      arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
-      //wrist.SetControl(mmWrist.WithPosition(wrist::intake));
-      fmt::print("mechMode = Mech::Release - position: ", arm::intake, "/n");
-      // intake motors release note onto ground (- direction)
-      break;
+      case Mech::AmpScore :
+        arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
+        //arm.SetPosition(arm::amp); // this should be unnecessary
+        //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+        fmt::print("mechMode = Mech::AmpScore - position: ", arm::amp, "/n");
+        // intake motors to deliver note into amp (+ direction)
+        mechMode = Mech::Home; // reset to home
+        break;
 
-    case Mech::Climb :
-      arm.SetControl(mmArm.WithPosition(arm::climb).WithSlot(0));
-      //wrist.SetControl(mmWrist.WithPosition(wrist::climb));
-      fmt::print("mechMode = Mech::Climb - position: ", arm::climb, "/n");
-      break;
+      case Mech::Release :
+        arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
+        //arm.SetPosition(arm::release);
+        //wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+        fmt::print("mechMode = Mech::Release - position: ", arm::intake, "/n");
+        // intake motors release note onto ground (- direction)
+        break;
 
-    default : // probably unnecessary
-      arm.SetControl(mmArm.WithPosition(arm::home).WithSlot(0));
-      //wrist.SetControl(mmWrist.WithPosition(wrist::home));
-      fmt::print("default \n");
+      case Mech::Climb :
+        arm.SetControl(mmArm.WithPosition(arm::climb).WithSlot(0));
+        //arm.SetPosition(arm::climb);
+        //wrist.SetControl(mmWrist.WithPosition(wrist::climb));
+        fmt::print("mechMode = Mech::Climb - position: ", arm::climb, "/n");
+        break;
 
+      default : // probably unnecessary
+        arm.SetControl(mmArm.WithPosition(arm::home).WithSlot(0));
+        //arm.SetPosition(arm::home);
+        //wrist.SetControl(mmWrist.WithPosition(wrist::home));
+        fmt::print("default \n");
+
+    }
   }
 
 }

@@ -131,18 +131,21 @@ void Robot::TeleopPeriodic() {
   */
   
   /* xbox input (mech) */
-  if (xbox.GetRawButtonPressed(1)) { // A
+  if (xbox.GetAButtonPressed()) { //GetRawButtonPressed(1)) { // A
     mechMode = Mech::Home;
-  } else if (xbox.GetRawButtonPressed(2)) { //B
+  } else if (xbox.GetBButtonPressed()) { //.GetRawButtonPressed(2)) { //B
     mechMode = Mech::Intake;
-  } else if (xbox.GetRawButtonPressed(3)) { //X
+  } else if (xbox.GetXButtonPressed()) { //.GetRawButtonPressed(3)) { //X
     mechMode = Mech::Release;
-  } else if (xbox.GetRawButtonPressed(4)) { //Y
+  } else if (xbox.GetYButtonPressed()) { //.GetRawButtonPressed(4)) { //Y
     mechMode = Mech::Climb;
-  } else if (xbox.GetRawButtonPressed(5)) { //L1
+  } else if (xbox.GetLeftBumperPressed()) { //.GetRawButtonPressed(5)) { //L1
     mechMode = Mech::Delivery;
-  } else if (xbox.GetRawButtonPressed(6)) { //R1
+  } else if (xbox.GetRightBumperPressed()) { //.GetRawButtonPressed(6)) { //R1
     mechMode = Mech::AmpScore;
+  } else if (xbox.GetStartButtonPressed()) { //reset current position to 'home' <- this might be a bad idea
+    arm.SetPosition(arm::home);
+    wrist.SetPosition(wrist::home);
   }
 
   beamBreak = false;

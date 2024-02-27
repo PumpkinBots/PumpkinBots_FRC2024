@@ -61,6 +61,10 @@ void Robot::RobotInit() {
   /* set up the arm and wrist */
   phx::configs::TalonFXConfiguration armConf{};
 
+  /* assume start in home position */
+  arm.SetPosition(arm::home);
+  wrist.SetPosition(wrist::home);
+
   /* why is "slot0" necessary - extremely poor documentation */
   auto& slot0Configs = armConf.Slot0;
   slot0Configs.kS = 0.05; // Add 0.25 V output to overcome static friction
@@ -71,8 +75,8 @@ void Robot::RobotInit() {
   slot0Configs.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmArmConf = armConf.MotionMagic;
-  mmArmConf.MotionMagicCruiseVelocity = 5; //80? 100
-  mmArmConf.MotionMagicAcceleration = 10; //160?
+  mmArmConf.MotionMagicCruiseVelocity = 80; //80? 100
+  mmArmConf.MotionMagicAcceleration = 160; //160?
   mmArmConf.MotionMagicJerk = 1600;
   //arm.GetConfigurator().Apply(armConf);
   ctre::phoenix::StatusCode status = ctre::phoenix::StatusCode::StatusCodeNotInitialized;
@@ -169,8 +173,6 @@ void Robot::TeleopPeriodic() {
     arm.SetPosition(arm::home);
     wrist.SetPosition(wrist::home);
   }
-
-  beamBreak = false;
 
   switch (mechMode) {
     case Mech::Home :

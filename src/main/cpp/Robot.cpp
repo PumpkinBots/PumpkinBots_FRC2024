@@ -92,7 +92,19 @@ void Robot::RobotInit() {
   mmWristConf.MotionMagicCruiseVelocity = 80;
   mmWristConf.MotionMagicAcceleration = 160;
   mmWristConf.MotionMagicJerk = 1600;
-  arm.GetConfigurator().Apply(armConf);
+  wrist.GetConfigurator().Apply(wristConf);
+
+  /* may need to add this back in
+
+  ctre::phoenix::StatusCode status = ctre::phoenix::StatusCode::StatusCodeNotInitialized;
+  for(int i = 0; i < 5; ++i) {
+    status = m_motor.GetConfigurator().Apply(cfg);
+    if (status.IsOK()) break;
+  }
+  if (!status.IsOK()) {
+    std::cout << "Could not configure device. Error: " << status.GetName() << std::endl;
+  }
+  */
 
   /* assume start in home position */
   arm.SetPosition(arm::home);
@@ -103,6 +115,8 @@ void Robot::RobotInit() {
 void Robot::DisabledPeriodic() {
   leftLeader.SetControl(phx::controls::NeutralOut{});
   rightLeader.SetControl(phx::controls::NeutralOut{});
+  arm.SetControl(phx::controls::NeutralOut{});
+  wrist.SetControl(phx::controls::NeutralOut{});
 }
 
 void Robot::TeleopPeriodic() {

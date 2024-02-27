@@ -49,19 +49,26 @@ void Robot::RobotInit() {
   rightConf.MotorOutput.Inverted = false;
 
   /* Apply configuration */
-  leftLeader.GetConfigurator().Apply(leftConf);
+  leftDrive.GetConfigurator().Apply(leftConf);
   leftFollower.GetConfigurator().Apply(leftConf);
-  rightLeader.GetConfigurator().Apply(rightConf);
+  rightDrive.GetConfigurator().Apply(rightConf);
   rightFollower.GetConfigurator().Apply(rightConf);
   
   /* Set up followers to follow leaders and retain the leaders' inversion settings */
-  leftFollower.SetControl(phx::controls::Follower{leftLeader.GetDeviceID(), false});
-  rightFollower.SetControl(phx::controls::Follower{rightLeader.GetDeviceID(), false});
+  leftFollower.SetControl(phx::controls::Follower{leftDrive.GetDeviceID(), false});
+  rightFollower.SetControl(phx::controls::Follower{rightDrive.GetDeviceID(), false});
 
   /* set up the arm and wrist */
   phx::configs::TalonFXConfiguration armConf{};
   phx::configs::TalonFXConfiguration wristConf{};
   
+  /* Set rotation direction for the arm and wrist */
+  /**
+   * FIXME: these are RANDOMLY chosen - review literature and cad to verify
+  */
+  armConf.MotorOutput.Inverted = true;
+  wristConf.MotorOutput.Inverted = false;
+
   /**
    * slot0 defines the PID characteristics of MotionMagic
    * FIXME: characterize this properly - this is copy-pasta crap
@@ -79,6 +86,9 @@ void Robot::RobotInit() {
   mmArmConf.MotionMagicAcceleration = 160;
   mmArmConf.MotionMagicJerk = 1600;
   arm.GetConfigurator().Apply(armConf);
+  armFollower.GetConfigurator().Apply(armConf);
+
+  armFollower.SetControl(phx::controls::Follower{arm.GetDeviceID(), true}); // inverted rotation
 
   auto& wristSlot0Conf = wristConf.Slot0;
   wristSlot0Conf.kS = 0.05; // Add 0.25 V output to overcome static friction
@@ -110,13 +120,30 @@ void Robot::RobotInit() {
   arm.SetPosition(arm::home);
   wrist.SetPosition(wrist::home);
 
+
+  phx::configs::TalonFXConfiguration intakeConf{};
+  /* Set rotation direction for the arm and wrist */
+  /**
+   * FIXME: these are RANDOMLY chosen - review literature and cad to verify
+  */
+  intakeConf.MotorOutput.Inverted = true;
+
+  intake.GetConfigurator().Apply(intakeConf);
+  intakeFollower.GetConfigurator().Apply(intakeConf);
+  
+  /* Set up followers to follow leaders and retain the leaders' inversion settings */
+  intakeFollower.SetControl(phx::controls::Follower{intake.GetDeviceID(), false});
+
+  intakeOut.Output = intake::intakeOut;
+  intakeRevOut.Output = - intake::intakeOut; // there should be a better way to do this
 }
 
 void Robot::DisabledPeriodic() {
-  leftLeader.SetControl(phx::controls::NeutralOut{});
-  rightLeader.SetControl(phx::controls::NeutralOut{});
-  arm.SetControl(phx::controls::NeutralOut{});
-  wrist.SetControl(phx::controls::NeutralOut{});
+  leftDrive.SetControl(phx::controls::NeutralOut{});
+  rightDrive.SetControl(phx::controls::NeutralOut{});
+  arm.SetControl(phx::controls::StaticBrake{});
+  wrist.SetControl(phx::controls::StaticBrake{});
+  intake.SetControl(phx::controls::NeutralOut{});
 }
 
 void Robot::TeleopPeriodic() {
@@ -160,8 +187,8 @@ void Robot::TeleopPeriodic() {
   leftOut.Output = maxSpeed * (speed - speedTurn);
   rightOut.Output = maxSpeed * (speed + speedTurn); 
 
-  leftLeader.SetControl(leftOut);
-  rightLeader.SetControl(rightOut);
+  leftDrive.SetControl(leftOut);
+  rightDrive.SetControl(rightOut);
 
   /**
    * Robot starts in "home" position - arm down, and intake folded up, rollers locked
@@ -178,6 +205,7 @@ void Robot::TeleopPeriodic() {
   */
   
   /* xbox input (mech) */
+  // refactor? https://docs.wpilib.org/en/stable/docs/software/commandbased/binding-commands-to-triggers.html
   if (xbox.GetAButton()) {
     mechMode = Mech::Home;
   } else if (xbox.GetBButton()) {
@@ -190,17 +218,19 @@ void Robot::TeleopPeriodic() {
     mechMode = Mech::Delivery;
   } else if (xbox.GetRightBumper()) {
     mechMode = Mech::AmpScore;
-  } else if (xbox.GetStartButton()) { //reset current position to 'home' <- this might be a bad idea
+  } else if (xbox.GetStartButton()) { // reset current position to 'home' <- this might be a bad idea
     arm.SetPosition(arm::home);
     wrist.SetPosition(wrist::home);
   }
 
-  armMoving = arm.GetRotorVelocity().GetValueAsDouble() != 0.0 ? true : false;
-  wristMoving = wrist.GetRotorVelocity().GetValueAsDouble() != 0.0 ? true : false;
+  armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false; // or GetRotorVelocity() ?
+  wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
+  noteDetected = noteSensor.Get();
 
   if (!armMoving && !wristMoving) { // do nothing if the mechanism is still in motion
     switch (mechMode) {
       case Mech::Home :
+        intake.SetControl(phx::controls::StaticBrake{});
         arm.SetControl(mmArm.WithPosition(arm::home).WithSlot(0));
         wrist.SetControl(mmWrist.WithPosition(wrist::home).WithSlot(0));
         break;
@@ -208,11 +238,11 @@ void Robot::TeleopPeriodic() {
       case Mech::Intake :
         arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
         wrist.SetControl(mmWrist.WithPosition(wrist::intake));
-        if (!beamBreak && !armMoving && !wristMoving) {
-          // intake motors on
+        if (!noteDetected && !armMoving && !wristMoving) {
+          intake.SetControl(intakeOut);
         }
-        if (beamBreak) {
-          // intake motors off
+        if (noteDetected) {
+          //intake.SetControl(phx::controls::StaticBrake{}); // shouldn't be needed here
           if (!armMoving && !wristMoving) {
             mechMode = Mech::Home; // reset to home
           }
@@ -228,7 +258,7 @@ void Robot::TeleopPeriodic() {
         arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
         wrist.SetControl(mmWrist.WithPosition(wrist::amp).WithSlot(0));
         if (!armMoving && !wristMoving) {
-          // intake motors to deliver note into amp (+ direction)
+          intake.SetControl(intakeOut);
           mechMode = Mech::Home; // reset to home
         }
         break;
@@ -237,7 +267,7 @@ void Robot::TeleopPeriodic() {
         arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
         wrist.SetControl(mmWrist.WithPosition(wrist::intake).WithSlot(0));
         if (!armMoving && !wristMoving) {
-          // intake motors release note onto ground (- direction)
+          intake.SetControl(intakeRevOut);
           mechMode = Mech::Home; // reset to home
         }
         break;

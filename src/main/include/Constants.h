@@ -33,17 +33,26 @@
 using rot = units::angle::turn_t;
 
 namespace can {
-	static constexpr int leftLeader = 0;
+	static constexpr int leftDrive = 0;
 	static constexpr int leftFollower = 1;
-	static constexpr int rightLeader = 2;
+	static constexpr int rightDrive = 2;
 	static constexpr int rightFollower = 3;
 
 	/* reserve addresses 4:7 for swerve drive */
 
 	static constexpr int arm = 8;
-	static constexpr int wrist = 9;
-	static constexpr int intakeLeader = 10;
-	static constexpr int intakeFollower = 11;
+	static constexpr int armFollower = 9;
+	static constexpr int wrist = 10;
+	static constexpr int intake = 11;
+	static constexpr int intakeFollower = 12;
+}
+
+namespace dio {
+	static constexpr int noteSensor = 0;
+}
+
+namespace intake {
+	static constexpr double intakeOut = 0.2;
 }
 
 /**

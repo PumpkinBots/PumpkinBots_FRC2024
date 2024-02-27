@@ -49,16 +49,11 @@ class Robot : public frc::TimedRobot {
 
     /**
      * CONFIGURE DRIVE MOTORS
-     * FIXME: voltageControl is UNTESTED
     */
-
-    /* Voltage control */
-    //phx::controls::VoltageOut voltageControl{0_V};
-
-    /* Drive configuration */
-    phx::hardware::TalonFX leftLeader{can::leftLeader, CAN};
+    /* Drive motor configuration */
+    phx::hardware::TalonFX leftDrive{can::leftDrive, CAN};
     phx::hardware::TalonFX leftFollower{can::leftFollower, CAN};
-    phx::hardware::TalonFX rightLeader{can::rightLeader, CAN};
+    phx::hardware::TalonFX rightDrive{can::rightDrive, CAN};
     phx::hardware::TalonFX rightFollower{can::rightFollower, CAN};
     
     phx::controls::DutyCycleOut leftOut{0}; // Initialize output to 0%
@@ -67,8 +62,9 @@ class Robot : public frc::TimedRobot {
     /**
      * CONFIGURE ARM/WRIST MOTORS
     */
-
+    /* Mechanism motor configuration */
     phx::hardware::TalonFX arm{can::arm, CAN};
+    phx::hardware::TalonFX armFollower{can::armFollower, CAN};
     phx::hardware::TalonFX wrist{can::wrist, CAN};
 
     phx::controls::MotionMagicExpoDutyCycle mmArm{arm::home};
@@ -79,17 +75,31 @@ class Robot : public frc::TimedRobot {
     bool armMoving = false;
     bool wristMoving = false;
 
-    // Slow drive starts as false, is enabled by pressing button 3
-    bool slowDrive = false;
+    /**
+     * CONFIGURE INTAKE MOTORS
+    */
+    /* Intake motor configuration */
+    phx::hardware::TalonFX intake{can::intake, CAN};
+    phx::hardware::TalonFX intakeFollower{can::intakeFollower, CAN};
 
-    /* joystick USB port connection (assigned in driver station)
-      Make sure these are correctly assigned in the driver station, if they aren't the robot can't read any inputs */
+    phx::controls::DutyCycleOut intakeOut{0}; // Initialize output to 0%
+    phx::controls::DutyCycleOut intakeRevOut{0}; // Initialize output to 0%
 
+    // intake sensor
+    frc::DigitalInput noteSensor{dio::noteSensor};
+    bool noteDetected = false; // if we have a note pre-loaded, beamBreak detection should set this to true
+
+    /**
+     * CONTROL INTERFACE
+     * joystick and xbox USB port connection (assigned in driver station)
+     * Make sure these are correctly assigned in the driver station, if they aren't the robot can't read any inputs
+    */
     frc::Joystick joystick{0};
     frc::XboxController xbox{1};
-    
-    // intake sensor
-    bool beamBreak = false;
+
+    // Slow drive starts as false, it is enabled by pressing button 3
+    bool slowDrive = false;    
+
     //Set up slew rate limiter
 
     //exactly what you think, its a timer

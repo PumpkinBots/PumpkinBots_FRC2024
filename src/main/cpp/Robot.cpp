@@ -60,33 +60,44 @@ void Robot::RobotInit() {
 
   /* set up the arm and wrist */
   phx::configs::TalonFXConfiguration armConf{};
+  phx::configs::TalonFXConfiguration wristConf{};
+  
+  /**
+   * slot0 defines the PID characteristics of MotionMagic
+   * FIXME: characterize this properly - this is copy-pasta crap
+  */
+  auto& armSlot0Conf = armConf.Slot0;
+  armSlot0Conf.kS = 0.05; // Add 0.25 V output to overcome static friction
+  armSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
+  armSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
+  armSlot0Conf.kP = 0; // A position error of 2.5 rotations results in 12 V output
+  armSlot0Conf.kI = 0; // no output for integrated error
+  armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
+
+  auto& mmArmConf = armConf.MotionMagic;
+  mmArmConf.MotionMagicCruiseVelocity = 80;
+  mmArmConf.MotionMagicAcceleration = 160;
+  mmArmConf.MotionMagicJerk = 1600;
+  arm.GetConfigurator().Apply(armConf);
+
+  auto& wristSlot0Conf = wristConf.Slot0;
+  wristSlot0Conf.kS = 0.05; // Add 0.25 V output to overcome static friction
+  wristSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
+  wristSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
+  wristSlot0Conf.kP = 0; // A position error of 2.5 rotations results in 12 V output
+  wristSlot0Conf.kI = 0; // no output for integrated error
+  wristSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
+
+  auto& mmWristConf = wristConf.MotionMagic;
+  mmWristConf.MotionMagicCruiseVelocity = 80;
+  mmWristConf.MotionMagicAcceleration = 160;
+  mmWristConf.MotionMagicJerk = 1600;
+  arm.GetConfigurator().Apply(armConf);
 
   /* assume start in home position */
   arm.SetPosition(arm::home);
   wrist.SetPosition(wrist::home);
 
-  /* why is "slot0" necessary - extremely poor documentation */
-  auto& slot0Configs = armConf.Slot0;
-  slot0Configs.kS = 0.05; // Add 0.25 V output to overcome static friction
-  slot0Configs.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
-  slot0Configs.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  slot0Configs.kP = 0; // A position error of 2.5 rotations results in 12 V output
-  slot0Configs.kI = 0; // no output for integrated error
-  slot0Configs.kD = 0; // A velocity error of 1 rps results in 0.1 V output
-
-  auto& mmArmConf = armConf.MotionMagic;
-  mmArmConf.MotionMagicCruiseVelocity = 80; //80? 100
-  mmArmConf.MotionMagicAcceleration = 160; //160?
-  mmArmConf.MotionMagicJerk = 1600;
-  //arm.GetConfigurator().Apply(armConf);
-  ctre::phoenix::StatusCode status = ctre::phoenix::StatusCode::StatusCodeNotInitialized;
-  for(int i = 0; i < 5; ++i) {
-    status = arm.GetConfigurator().Apply(armConf);
-    if (status.IsOK()) break;
-  }
-  if (!status.IsOK()) {
-    std::cout << "Could not configure device. Error: " << status.GetName() << std::endl;
-  }
 }
 
 void Robot::DisabledPeriodic() {
@@ -140,16 +151,12 @@ void Robot::TeleopPeriodic() {
 
   /**
    * Robot starts in "home" position - arm down, and intake folded up, rollers locked
-   * button 1 (intake sequence): moves the wrist so the intake is ready to pick up a note, and spins rollers inward until a note is detected. Then stops the rollers, and returns to home.
-   * button 2 (scoring part 1): moves the arm up, and adjusts the wrist so it aligns with the amp.
-   * button 3 (scoring part 2 or set down note):
-   *   First checks if the arm is home.
-   *     No --> action 1
-   *     Yes --> action 2
-   *     action 1: spins intake motors to eject the note into the amp and returns to home
-   *     action 2: moves the wrist to deploy the intake, spins the rollers in reverse to "set down the note", and returns to home.
-   * button 4 (climbing position): moves the arm up, but keeps the intake in home position to expose climbing hooks.
-   * button 5 (force home or finish climb): returns all systems to home. If the hooks are on the chain, this is the final climb sequence.
+   * A (force home or finish climb): returns all systems to home. If the hooks are on the chain, this is the final climb sequence.
+   * B (intake sequence): moves the wrist so the intake is ready to pick up a note, and spins rollers inward until a note is detected. Then stops the rollers, and returns to home.
+   * X (release note): moves the wrist to deploy the intake, spins the rollers in reverse to "set down the note", and returns to home.
+   * Y (climbing position): moves the arm up, but keeps the intake in home position to expose climbing hooks.
+   * L1 (scoring part 1): moves the arm up, and adjusts the wrist so it aligns with the amp.
+   * R1 (scoring part 2): spins intake motors to eject the note into the amp and returns to home
   */
 
   /**
@@ -157,128 +164,75 @@ void Robot::TeleopPeriodic() {
   */
   
   /* xbox input (mech) */
-  if (xbox.GetAButton()) { //GetRawButtonPressed(1)) { // A
+  if (xbox.GetAButton()) {
     mechMode = Mech::Home;
-  } else if (xbox.GetBButton()) { //.GetRawButtonPressed(2)) { //B
+  } else if (xbox.GetBButton()) {
     mechMode = Mech::Intake;
-  } else if (xbox.GetXButton()) { //.GetRawButtonPressed(3)) { //X
+  } else if (xbox.GetXButton()) {
     mechMode = Mech::Release;
-  } else if (xbox.GetYButton()) { //.GetRawButtonPressed(4)) { //Y
+  } else if (xbox.GetYButton()) {
     mechMode = Mech::Climb;
-  } else if (xbox.GetLeftBumper()) { //.GetRawButtonPressed(5)) { //L1
+  } else if (xbox.GetLeftBumper()) {
     mechMode = Mech::Delivery;
-  } else if (xbox.GetRightBumper()) { //.GetRawButtonPressed(6)) { //R1
+  } else if (xbox.GetRightBumper()) {
     mechMode = Mech::AmpScore;
   } else if (xbox.GetStartButton()) { //reset current position to 'home' <- this might be a bad idea
     arm.SetPosition(arm::home);
     wrist.SetPosition(wrist::home);
   }
 
-  switch (mechMode) {
-    case Mech::Home :
-      if (!armMoving && arm.GetPosition().GetValue() != arm::home) {
+  armMoving = arm.GetRotorVelocity().GetValueAsDouble() != 0.0 ? true : false;
+  wristMoving = wrist.GetRotorVelocity().GetValueAsDouble() != 0.0 ? true : false;
+
+  if (!armMoving && !wristMoving) { // do nothing if the mechanism is still in motion
+    switch (mechMode) {
+      case Mech::Home :
         arm.SetControl(mmArm.WithPosition(arm::home).WithSlot(0));
-        armMoving = true;
-      } else if (arm.GetPosition().GetValue() == arm::home) {
-        armMoving = false;
-      } // else wait for it to finish moving - this has failure modes
+        wrist.SetControl(mmWrist.WithPosition(wrist::home).WithSlot(0));
+        break;
 
-      //arm.SetPosition(arm::home);
-      //wrist.SetControl(mmWrist.WithPosition(wrist::home));
-      //fmt::print("mechMode = Mech::Home - position: ", arm::home, "/n");
-      break;
-
-    case Mech::Intake :
-      if (!armMoving && arm.GetPosition().GetValue() != arm::intake) {
+      case Mech::Intake :
         arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
-        armMoving = true;
-      } else if (arm.GetPosition().GetValue() == arm::intake) {
-        armMoving = false;
-      }
-      //arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
+        wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+        if (!beamBreak && !armMoving && !wristMoving) {
+          // intake motors on
+        }
+        if (beamBreak) {
+          // intake motors off
+          if (!armMoving && !wristMoving) {
+            mechMode = Mech::Home; // reset to home
+          }
+        }
+        break;
 
-      //arm.SetPosition(arm::intake);
-      //wrist.SetControl(mmWrist.WithPosition(wrist::intake));
-      //fmt::print("mechMode = Mech::Intake - position: ", arm::intake, "/n");
-      // intake motors on
-      // if (beamBreak) {
-        // intake motors off
-        // mechMode = Mech::Home; // reset to home for note transport
-        //}
-      break;
-
-    case Mech::Delivery :
-      if (!armMoving && arm.GetPosition().GetValue() != arm::amp) {
+      case Mech::Delivery :
         arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
-        armMoving = true;
-      } else if (arm.GetPosition().GetValue() == arm::amp) {
-        armMoving = false;
-      }
-      //arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
+        wrist.SetControl(mmWrist.WithPosition(wrist::amp).WithSlot(0));
+        break;
 
-      //arm.SetPosition(arm::amp);
-      //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
-      //fmt::print("mechMode = Mech::Delivery - position: ", arm::amp, "/n");
-      break;
-
-    case Mech::AmpScore :
-      if (!armMoving && arm.GetPosition().GetValue() != arm::amp) {
+      case Mech::AmpScore :
         arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
-        armMoving = true;
-      } else if (arm.GetPosition().GetValue() == arm::amp) {
-        // intake motors to deliver note into amp (+ direction)
-        armMoving = false;
-        mechMode = Mech::Home; // reset to home
-      }
-      //arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
+        wrist.SetControl(mmWrist.WithPosition(wrist::amp).WithSlot(0));
+        if (!armMoving && !wristMoving) {
+          // intake motors to deliver note into amp (+ direction)
+          mechMode = Mech::Home; // reset to home
+        }
+        break;
 
-      //arm.SetPosition(arm::amp); // this should be unnecessary
-      //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
-      //fmt::print("mechMode = Mech::AmpScore - position: ", arm::amp, "/n");
-      // intake motors to deliver note into amp (+ direction)
-      //mechMode = Mech::Home; // reset to home
-      break;
-
-    case Mech::Release :
-      if (!armMoving && arm.GetPosition().GetValue() != arm::intake) {
+      case Mech::Release :
         arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
-        armMoving = true;
-      } else if (arm.GetPosition().GetValue() == arm::intake) {
-        armMoving = false;
-      }
-      //arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
+        wrist.SetControl(mmWrist.WithPosition(wrist::intake).WithSlot(0));
+        if (!armMoving && !wristMoving) {
+          // intake motors release note onto ground (- direction)
+          mechMode = Mech::Home; // reset to home
+        }
+        break;
 
-      //arm.SetPosition(arm::release);
-      //wrist.SetControl(mmWrist.WithPosition(wrist::intake));
-      //fmt::print("mechMode = Mech::Release - position: ", arm::intake, "/n");
-      // intake motors release note onto ground (- direction)
-      break;
-
-    case Mech::Climb :
-      if (!armMoving && arm.GetPosition().GetValue() != arm::climb) {
+      case Mech::Climb :
         arm.SetControl(mmArm.WithPosition(arm::climb).WithSlot(0));
-        armMoving = true;
-      } else if (arm.GetPosition().GetValue() == arm::climb) {
-        armMoving = false;
-      }
-      //arm.SetControl(mmArm.WithPosition(arm::climb).WithSlot(0));
-
-      //arm.SetPosition(arm::climb);
-      //wrist.SetControl(mmWrist.WithPosition(wrist::climb));
-      //fmt::print("mechMode = Mech::Climb - position: ", arm::climb, "/n");
-      break;
-
-    default : // probably unnecessary
-      if (!armMoving && arm.GetPosition().GetValue() != arm::home) {
-        arm.SetControl(mmArm.WithPosition(arm::home).WithSlot(0));
-        armMoving = true;
-      } else if (arm.GetPosition().GetValue() == arm::home) {
-        armMoving = false;
-      }
-      //arm.SetPosition(arm::home);
-      //wrist.SetControl(mmWrist.WithPosition(wrist::home));
-      //fmt::print("default \n");
-
+        wrist.SetControl(mmWrist.WithPosition(wrist::climb).WithSlot(0));
+        break;
+    }
   }
 
 }

@@ -83,7 +83,6 @@ class Robot : public frc::TimedRobot {
     phx::hardware::TalonFX intakeFollower{can::intakeFollower, CAN};
 
     phx::controls::DutyCycleOut intakeOut{0}; // Initialize output to 0%
-    phx::controls::DutyCycleOut intakeRevOut{0}; // Initialize output to 0%
 
     // intake sensor
     frc::DigitalInput noteSensor{dio::noteSensor};
@@ -101,6 +100,7 @@ class Robot : public frc::TimedRobot {
     bool slowDrive = false;    
 
     //Set up slew rate limiter
+    /* FIXME - what goes here? */
 
     //exactly what you think, its a timer
     frc::Timer m_timer;

@@ -22,24 +22,11 @@ void Robot::RobotInit() {
   frc::SmartDashboard::PutNumber("Auto mode", 0);
 
   frc::CameraServer::StartAutomaticCapture();
-  frc::CameraServer::StartAutomaticCapture();
 
   /**
    * DRIVE MOTOR CONFIGURATION
-   * FIXME: convert the 12_V assignment and motor inversion configuration below to a for-each loop
-   *        eg with a struct of driveMotors, split between left and right
-   *        this should also be extended to arm and elbow motors
-   * FIXME: voltageControl is UNTESTED and should not be necessary using *DutyCycle calls
   */
   
-  /* Voltage control */
-  /*
-  leftLeader.SetControl(voltageControl.WithOutput(12_V));
-  leftFollower.SetControl(voltageControl.WithOutput(12_V));
-  rightLeader.SetControl(voltageControl.WithOutput(12_V));
-  rightFollower.SetControl(voltageControl.WithOutput(12_V));
-  */
-
   /* Drive configuration */
   phx::configs::TalonFXConfiguration leftConf{};
   phx::configs::TalonFXConfiguration rightConf{};
@@ -58,7 +45,11 @@ void Robot::RobotInit() {
   leftFollower.SetControl(phx::controls::Follower{leftDrive.GetDeviceID(), false});
   rightFollower.SetControl(phx::controls::Follower{rightDrive.GetDeviceID(), false});
 
-  /* set up the arm and wrist */
+  /**
+   * MECHANISM MOTOR CONFIGURATION
+  */
+
+  /* Mechanism configuration */
   phx::configs::TalonFXConfiguration armConf{};
   phx::configs::TalonFXConfiguration wristConf{};
   
@@ -104,29 +95,18 @@ void Robot::RobotInit() {
   mmWristConf.MotionMagicJerk = 1600;
   wrist.GetConfigurator().Apply(wristConf);
 
-  /* may need to add this back in
-
-  ctre::phoenix::StatusCode status = ctre::phoenix::StatusCode::StatusCodeNotInitialized;
-  for(int i = 0; i < 5; ++i) {
-    status = m_motor.GetConfigurator().Apply(cfg);
-    if (status.IsOK()) break;
-  }
-  if (!status.IsOK()) {
-    std::cout << "Could not configure device. Error: " << status.GetName() << std::endl;
-  }
-  */
-
   /* assume start in home position */
   arm.SetPosition(arm::home);
   wrist.SetPosition(wrist::home);
 
-
+  /* Intake configuration */
   phx::configs::TalonFXConfiguration intakeConf{};
+  
   /* Set rotation direction for the arm and wrist */
   /**
    * FIXME: these are RANDOMLY chosen - review literature and cad to verify
   */
-  intakeConf.MotorOutput.Inverted = true;
+  intakeConf.MotorOutput.Inverted = false; // primary intake at left when facing the intake mechanism
 
   intake.GetConfigurator().Apply(intakeConf);
   intakeFollower.GetConfigurator().Apply(intakeConf);
@@ -135,7 +115,6 @@ void Robot::RobotInit() {
   intakeFollower.SetControl(phx::controls::Follower{intake.GetDeviceID(), false});
 
   intakeOut.Output = intake::intakeOut;
-  intakeRevOut.Output = - intake::intakeOut; // there should be a better way to do this
 }
 
 void Robot::DisabledPeriodic() {
@@ -206,6 +185,8 @@ void Robot::TeleopPeriodic() {
   
   /* xbox input (mech) */
   // refactor? https://docs.wpilib.org/en/stable/docs/software/commandbased/binding-commands-to-triggers.html
+  // not a trivial refactor as states chain to each other (usually back to Mech::HOME)
+
   if (xbox.GetAButton()) {
     mechMode = Mech::Home;
   } else if (xbox.GetBButton()) {
@@ -242,7 +223,6 @@ void Robot::TeleopPeriodic() {
           intake.SetControl(intakeOut);
         }
         if (noteDetected) {
-          //intake.SetControl(phx::controls::StaticBrake{}); // shouldn't be needed here
           if (!armMoving && !wristMoving) {
             mechMode = Mech::Home; // reset to home
           }
@@ -267,7 +247,9 @@ void Robot::TeleopPeriodic() {
         arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
         wrist.SetControl(mmWrist.WithPosition(wrist::intake).WithSlot(0));
         if (!armMoving && !wristMoving) {
-          intake.SetControl(intakeRevOut);
+          intake.SetInverted(!intake.GetInverted()); // reverse intake motors
+          intake.SetControl(intakeOut);
+          intake.SetInverted(!intake.GetInverted()); // revert to standard direction
           mechMode = Mech::Home; // reset to home
         }
         break;

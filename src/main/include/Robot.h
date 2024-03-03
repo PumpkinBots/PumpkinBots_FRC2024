@@ -70,10 +70,17 @@ class Robot : public frc::TimedRobot {
     phx::controls::MotionMagicExpoDutyCycle mmArm{arm::home};
     phx::controls::MotionMagicExpoDutyCycle mmWrist{wrist::home};
 
-    enum class Mech {Home, Intake, Delivery, AmpScore, Release, Climb};
+    phx::controls::DutyCycleOut armOut{0};
+    phx::controls::DutyCycleOut wristOut{0};
+
+    enum class Mech {Home, Intake, Delivery, AmpScore, Release, Climb, Manual};
     Mech mechMode = Mech::Home;
     bool armMoving = false;
     bool wristMoving = false;
+
+    double slowDownWereTesting = 0.0;
+    double armSpeed = 0.0;
+    double wristSpeed = 0.0;
 
     /**
      * CONFIGURE INTAKE MOTORS

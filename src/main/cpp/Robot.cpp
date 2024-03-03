@@ -199,10 +199,20 @@ void Robot::TeleopPeriodic() {
     mechMode = Mech::Delivery;
   } else if (xbox.GetRightBumper()) {
     mechMode = Mech::AmpScore;
-  } else if (xbox.GetStartButton()) { // reset current position to 'home' <- this might be a bad idea
-    arm.SetPosition(arm::home);
-    wrist.SetPosition(wrist::home);
+  } else if (xbox.GetStartButton()) {
+    mechMode = Mech::Manual;
   }
+  
+  // add support for manual mode 
+  // xbox.GetRightTriggerAxis() is shoot
+  // -xbox.GetLeftY() is wrist moving away from home (positive angle)
+  // ?-?xbox.GetRightY() is arm moving away from home (positive angle)
+  // arm.SetPosition(arm::home);
+  // wrist.SetPosition(wrist::home);
+
+  // print out angular position of both arm and wrist
+  std::cout << "Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut << "\n";
+  std::cout << "Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::gearOut << "\n";
 
   armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false; // or GetRotorVelocity() ?
   wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
@@ -210,6 +220,21 @@ void Robot::TeleopPeriodic() {
 
   if (!armMoving && !wristMoving) { // do nothing if the mechanism is still in motion
     switch (mechMode) {
+      case Mech::Manual :
+        slowDownWereTesting = 0.1;
+        armSpeed = (fabs(xbox.GetRightY()) > deadband) ? xbox.GetRightY() : 0.0;
+        wristSpeed = (fabs(xbox.GetLeftY()) > deadband) ? xbox.GetLeftY() : 0.0;
+        armOut.Output = slowDownWereTesting * armSpeed;
+        wristOut.Output = - slowDownWereTesting * wristSpeed;
+        arm.SetControl(armOut);
+        wrist.SetControl(wristOut);
+
+        if (xbox.GetBackButton()) {
+          arm.SetPosition(arm::home);
+          wrist.SetPosition(wrist::home);
+        }
+        break;
+
       case Mech::Home :
         intake.SetControl(phx::controls::StaticBrake{});
         arm.SetControl(mmArm.WithPosition(arm::home).WithSlot(0));

@@ -218,7 +218,7 @@ void Robot::TeleopPeriodic() {
 
       case Mech::Intake :
         arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
-        wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+        wrist.SetControl(mmWrist.WithPosition(wrist::intake).WithSlot(0));
         if (!noteDetected && !armMoving && !wristMoving) {
           intake.SetControl(intakeOut);
         }

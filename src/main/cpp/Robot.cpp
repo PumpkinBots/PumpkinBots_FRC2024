@@ -60,6 +60,13 @@ void Robot::RobotInit() {
   armConf.MotorOutput.Inverted = true;
   wristConf.MotorOutput.Inverted = false;
 
+  // limit dutycycles during calibration
+  armConf.MotorOutput.PeakForwardDutyCycle = 0.7;  // Peak output of 70%
+  armConf.MotorOutput.PeakReverseDutyCycle = -0.7; // Peak output of 70%
+  wristConf.MotorOutput.PeakForwardDutyCycle = 0.7;  // Peak output of 70%
+  wristConf.MotorOutput.PeakReverseDutyCycle = -0.7; // Peak output of 70%
+
+
   /**
    * slot0 defines the PID characteristics of MotionMagic
    * FIXME: characterize this properly - this is copy-pasta crap
@@ -107,6 +114,10 @@ void Robot::RobotInit() {
    * FIXME: these are RANDOMLY chosen - review literature and cad to verify
   */
   intakeConf.MotorOutput.Inverted = false; // primary intake at left when facing the intake mechanism
+
+  // limit duty cycles during testing
+  intakeConf.MotorOutput.PeakForwardDutyCycle = 0.7;  // Peak output of 70%
+  intakeConf.MotorOutput.PeakReverseDutyCycle = -0.7; // Peak output of 70%
 
   intake.GetConfigurator().Apply(intakeConf);
   intakeFollower.GetConfigurator().Apply(intakeConf);

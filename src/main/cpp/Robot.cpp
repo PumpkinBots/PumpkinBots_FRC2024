@@ -310,6 +310,7 @@ void Robot::AutonomousPeriodic() {
   if (m_timer.Get() >= 0_s && m_timer.Get() <= 2_s) {
     // drive forward
     speed = 0.1;
+    std::cout << "AutonomousPeriodic: speed=" << speed;
   } 
   
   leftOut.Output = maxSpeed * speed;

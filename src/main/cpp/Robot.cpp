@@ -73,9 +73,9 @@ void Robot::RobotInit() {
   armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmArmConf = armConf.MotionMagic;
-  mmArmConf.MotionMagicCruiseVelocity = 80;
-  mmArmConf.MotionMagicAcceleration = 160;
-  mmArmConf.MotionMagicJerk = 1600;
+  mmArmConf.MotionMagicCruiseVelocity = 5;
+  mmArmConf.MotionMagicAcceleration = 10;
+  mmArmConf.MotionMagicJerk = 50;
   arm.GetConfigurator().Apply(armConf);
   armFollower.GetConfigurator().Apply(armConf);
 
@@ -90,9 +90,9 @@ void Robot::RobotInit() {
   wristSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmWristConf = wristConf.MotionMagic;
-  mmWristConf.MotionMagicCruiseVelocity = 80;
-  mmWristConf.MotionMagicAcceleration = 160;
-  mmWristConf.MotionMagicJerk = 1600;
+  mmWristConf.MotionMagicCruiseVelocity = 5;
+  mmWristConf.MotionMagicAcceleration = 10;
+  mmWristConf.MotionMagicJerk = 50;
   wrist.GetConfigurator().Apply(wristConf);
 
   /* assume start in home position */
@@ -320,6 +320,16 @@ void Robot::AutonomousPeriodic() {
   rightDrive.SetControl(rightOut);
 
 }
+
+void Robot::RobotPeriodic() {
+  if (m_printCount++ > 10) {
+    m_printCount = 0;
+    std::cout << "Arm Pos: " << arm.GetPosition() << "Wrist Pos: " << wrist.GetPosition() << std::endl;
+    std::cout << "Arm Vel: " << arm.GetVelocity() << "Wrist Vel: " << wrist.GetVelocity() << std::endl;
+    std::cout << std::endl;
+  }
+}
+
 
 
 #ifndef RUNNING_FRC_TESTS

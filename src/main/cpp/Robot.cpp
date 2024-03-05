@@ -54,11 +54,8 @@ void Robot::RobotInit() {
   phx::configs::TalonFXConfiguration wristConf{};
   
   /* Set rotation direction for the arm and wrist */
-  /**
-   * FIXME: these are RANDOMLY chosen - review literature and cad to verify
-  */
-  armConf.MotorOutput.Inverted = true;
-  wristConf.MotorOutput.Inverted = false;
+  armConf.MotorOutput.Inverted = true; // verified
+  wristConf.MotorOutput.Inverted = false; // verified
 
   /**
    * slot0 defines the PID characteristics of MotionMagic
@@ -133,9 +130,19 @@ void Robot::TeleopPeriodic() {
   */
   if (joystick.GetRawButtonPressed(3)) {
     slowDrive = !slowDrive;
-    fmt::print("limited maxSpeed: ", slowDrive);
+    std::cout << "limited maxSpeed: " << slowDrive;
   }
   const double maxSpeed = slowDrive ? 0.3 : 1.0;
+
+  /**
+   * REVERSE DRIVE
+   * Button two on the joystick toggles the reverse drive mode
+   * FIXME: move this button to something more user friendly like the thumb button
+  */
+  if (joystick.GetRawButtonPressed(2)) {
+    reverseDrive = !reverseDrive;
+    std::cout << "reverse drive: " << reverseDrive;
+  }
 
   /**
    * SPEED
@@ -163,8 +170,15 @@ void Robot::TeleopPeriodic() {
    * or it might be better to leave as-is as it further limits turning at speed
    * FIXME: explore alternate implementations of turning + speed to make it as smooth and predictable as possible for the driver
   */
-  leftOut.Output = maxSpeed * (speed - speedTurn);
-  rightOut.Output = maxSpeed * (speed + speedTurn); 
+  leftOut.Output = maxSpeed * (speed + speedTurn);
+  rightOut.Output = maxSpeed * (speed - speedTurn); 
+
+  if (reverseDrive) {
+    leftDrive.SetInverted(-leftDrive.GetInverted());
+    rightDrive.SetInverted(-rightDrive.GetInverted());
+    leftOut.Output = - leftOut.Output;
+    rightOut.Output = - rightOut.Output;
+  }
 
   leftDrive.SetControl(leftOut);
   rightDrive.SetControl(rightOut);
@@ -211,10 +225,10 @@ void Robot::TeleopPeriodic() {
   // wrist.SetPosition(wrist::home);
 
   // print out angular position of both arm and wrist
-  std::cout << "Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut << "\n";
-  std::cout << "Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::gearOut << "\n";
+  std::cout << "Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut << " degrees \n";
+  std::cout << "Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::gearOut << " degrees \n";
 
-  armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false; // or GetRotorVelocity() ?
+  armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   noteDetected = noteSensor.Get();
 

@@ -104,7 +104,10 @@ class Robot : public frc::TimedRobot {
     frc::XboxController xbox{1};
 
     // Slow drive starts as false, it is enabled by pressing button 3
-    bool slowDrive = false;    
+    bool slowDrive = false;
+
+    // Reverse drive direction support
+    bool reverseDrive = false;
 
     //Set up slew rate limiter
     /* FIXME - what goes here? */

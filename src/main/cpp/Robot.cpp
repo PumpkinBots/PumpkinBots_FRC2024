@@ -226,6 +226,9 @@ void Robot::TeleopPeriodic() {
         wristSpeed = (fabs(xbox.GetLeftY()) > deadband) ? xbox.GetLeftY() : 0.0;
         armOut.Output = slowDownWereTesting * armSpeed;
         wristOut.Output = - slowDownWereTesting * wristSpeed;
+
+        std::cout << "Manual Mode: armSpeed" << armSpeed << " wristSpeed " << wristSpeed << "\n";
+
         arm.SetControl(armOut);
         wrist.SetControl(wristOut);
 
@@ -287,6 +290,36 @@ void Robot::TeleopPeriodic() {
   }
 
 }
+
+void Robot::AutonomousInit() {
+    //Set timer to zero and start counting
+    m_timer.Reset();
+    m_timer.Start();
+
+    //autoMode = frc::SmartDashboard::GetNumber("Auto mode", 0);
+}
+
+void Robot::AutonomousPeriodic() {
+  if (joystick.GetRawButtonPressed(3)) {
+    slowDrive = !slowDrive;
+    fmt::print("limited maxSpeed: ", slowDrive);
+  }
+  const double maxSpeed = slowDrive ? 0.3 : 1.0;
+  double speed = 0.0;
+
+  if (m_timer.Get() >= 0_s && m_timer.Get() <= 2_s) {
+    // drive forward
+    speed = 0.1;
+  } 
+  
+  leftOut.Output = maxSpeed * speed;
+  rightOut.Output = maxSpeed * speed; 
+
+  leftDrive.SetControl(leftOut);
+  rightDrive.SetControl(rightOut);
+
+}
+
 
 #ifndef RUNNING_FRC_TESTS
 int main() {

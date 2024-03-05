@@ -32,8 +32,8 @@ void Robot::RobotInit() {
   phx::configs::TalonFXConfiguration rightConf{};
 
   /* Controls which end of the robot is front - these should always be set in opposition */
-  leftConf.MotorOutput.Inverted = true;
-  rightConf.MotorOutput.Inverted = false;
+  leftConf.MotorOutput.Inverted = false;
+  rightConf.MotorOutput.Inverted = true;
 
   /* Apply configuration */
   leftDrive.GetConfigurator().Apply(leftConf);
@@ -155,7 +155,7 @@ void Robot::TeleopPeriodic() {
   */
   double turn = 0.5 * ((joystick.GetTwist()) * (fabs(joystick.GetTwist())));
   double speedTurn = turn * (-((fabs(speed)) / 2) + 1);
-  
+  speedTurn = -speedTurn;
   /**
    * DRIVE OUTPUT (speed + speedTurn)
    * The existing calculation will result in even less aggressive turning at max speed due to effectively saturating the leading drive motor.

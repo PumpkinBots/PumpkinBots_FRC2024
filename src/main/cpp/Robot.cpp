@@ -57,6 +57,13 @@ void Robot::RobotInit() {
   armConf.MotorOutput.Inverted = true; // verified
   wristConf.MotorOutput.Inverted = false; // verified
 
+  // limit dutycycles during calibration
+  armConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
+  armConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
+  wristConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
+  wristConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
+
+
   /**
    * slot0 defines the PID characteristics of MotionMagic
    * FIXME: characterize this properly - this is copy-pasta crap
@@ -70,9 +77,9 @@ void Robot::RobotInit() {
   armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmArmConf = armConf.MotionMagic;
-  mmArmConf.MotionMagicCruiseVelocity = 80;
-  mmArmConf.MotionMagicAcceleration = 160;
-  mmArmConf.MotionMagicJerk = 1600;
+  mmArmConf.MotionMagicCruiseVelocity = 1;
+  mmArmConf.MotionMagicAcceleration = 1;
+  mmArmConf.MotionMagicJerk = 200;
   arm.GetConfigurator().Apply(armConf);
   armFollower.GetConfigurator().Apply(armConf);
 
@@ -87,9 +94,9 @@ void Robot::RobotInit() {
   wristSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmWristConf = wristConf.MotionMagic;
-  mmWristConf.MotionMagicCruiseVelocity = 80;
-  mmWristConf.MotionMagicAcceleration = 160;
-  mmWristConf.MotionMagicJerk = 1600;
+  mmWristConf.MotionMagicCruiseVelocity = 1;
+  mmWristConf.MotionMagicAcceleration = 1;
+  mmWristConf.MotionMagicJerk = 200;
   wrist.GetConfigurator().Apply(wristConf);
 
   /* assume start in home position */
@@ -104,6 +111,10 @@ void Robot::RobotInit() {
    * FIXME: these are RANDOMLY chosen - review literature and cad to verify
   */
   intakeConf.MotorOutput.Inverted = false; // primary intake at left when facing the intake mechanism
+
+  // limit duty cycles during testing
+  intakeConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
+  intakeConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
 
   intake.GetConfigurator().Apply(intakeConf);
   intakeFollower.GetConfigurator().Apply(intakeConf);
@@ -240,6 +251,9 @@ void Robot::TeleopPeriodic() {
         wristSpeed = (fabs(xbox.GetLeftY()) > deadband) ? xbox.GetLeftY() : 0.0;
         armOut.Output = slowDownWereTesting * armSpeed;
         wristOut.Output = - slowDownWereTesting * wristSpeed;
+
+        std::cout << "Manual Mode: armSpeed" << armSpeed << " wristSpeed " << wristSpeed << "\n";
+
         arm.SetControl(armOut);
         wrist.SetControl(wristOut);
 
@@ -301,6 +315,47 @@ void Robot::TeleopPeriodic() {
   }
 
 }
+
+void Robot::AutonomousInit() {
+    //Set timer to zero and start counting
+    m_timer.Reset();
+    m_timer.Start();
+
+    //autoMode = frc::SmartDashboard::GetNumber("Auto mode", 0);
+}
+
+void Robot::AutonomousPeriodic() {
+  if (joystick.GetRawButtonPressed(3)) {
+    slowDrive = !slowDrive;
+    fmt::print("limited maxSpeed: ", slowDrive);
+  }
+  const double maxSpeed = slowDrive ? 0.3 : 1.0;
+  double speed = 0.0;
+
+  if (m_timer.Get() >= 0_s && m_timer.Get() <= 2_s) {
+    // drive forward
+    speed = 0.1;
+    std::cout << "AutonomousPeriodic: speed=" << speed;
+  } 
+  
+  leftOut.Output = maxSpeed * speed;
+  rightOut.Output = maxSpeed * speed; 
+
+  leftDrive.SetControl(leftOut);
+  rightDrive.SetControl(rightOut);
+
+}
+
+void Robot::RobotPeriodic() {
+  if (m_printCount++ > 10) {
+    m_printCount = 0;
+    std::cout << "Arm Pos: " << arm.GetPosition() << "Wrist Pos: " << wrist.GetPosition() << std::endl;
+    std::cout << "Arm Vel: " << arm.GetVelocity() << "Wrist Vel: " << wrist.GetVelocity() << std::endl;
+    std::cout << std::endl;
+  }
+}
+
+
 
 #ifndef RUNNING_FRC_TESTS
 int main() {

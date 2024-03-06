@@ -125,6 +125,8 @@ class Robot : public frc::TimedRobot {
     double targetArea = table->GetNumber("ta",0.0);
     double targetSkew = table->GetNumber("ts",0.0);
 
+    int m_printCount = 0;
+
   public:
     Robot () {
       /* set up gyro */
@@ -135,10 +137,10 @@ class Robot : public frc::TimedRobot {
     }
 
     void RobotInit() override;
-    //void RobotPeriodic() override;
+    void RobotPeriodic() override;
 
-    //void AutonomousInit() override;
-    //void AutonomousPeriodic() override;
+    void AutonomousInit() override;
+    void AutonomousPeriodic() override;
 
     //void TeleopInit() override;
     void TeleopPeriodic() override;

@@ -61,10 +61,10 @@ void Robot::RobotInit() {
   wristConf.MotorOutput.Inverted = false;
 
   // limit dutycycles during calibration
-  armConf.MotorOutput.PeakForwardDutyCycle = 0.7;  // Peak output of 70%
-  armConf.MotorOutput.PeakReverseDutyCycle = -0.7; // Peak output of 70%
-  wristConf.MotorOutput.PeakForwardDutyCycle = 0.7;  // Peak output of 70%
-  wristConf.MotorOutput.PeakReverseDutyCycle = -0.7; // Peak output of 70%
+  armConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
+  armConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
+  wristConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
+  wristConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
 
 
   /**
@@ -80,9 +80,9 @@ void Robot::RobotInit() {
   armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmArmConf = armConf.MotionMagic;
-  mmArmConf.MotionMagicCruiseVelocity = 5;
-  mmArmConf.MotionMagicAcceleration = 10;
-  mmArmConf.MotionMagicJerk = 50;
+  mmArmConf.MotionMagicCruiseVelocity = 1;
+  mmArmConf.MotionMagicAcceleration = 1;
+  mmArmConf.MotionMagicJerk = 200;
   arm.GetConfigurator().Apply(armConf);
   armFollower.GetConfigurator().Apply(armConf);
 
@@ -97,9 +97,9 @@ void Robot::RobotInit() {
   wristSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmWristConf = wristConf.MotionMagic;
-  mmWristConf.MotionMagicCruiseVelocity = 5;
-  mmWristConf.MotionMagicAcceleration = 10;
-  mmWristConf.MotionMagicJerk = 50;
+  mmWristConf.MotionMagicCruiseVelocity = 1;
+  mmWristConf.MotionMagicAcceleration = 1;
+  mmWristConf.MotionMagicJerk = 200;
   wrist.GetConfigurator().Apply(wristConf);
 
   /* assume start in home position */
@@ -116,8 +116,8 @@ void Robot::RobotInit() {
   intakeConf.MotorOutput.Inverted = false; // primary intake at left when facing the intake mechanism
 
   // limit duty cycles during testing
-  intakeConf.MotorOutput.PeakForwardDutyCycle = 0.7;  // Peak output of 70%
-  intakeConf.MotorOutput.PeakReverseDutyCycle = -0.7; // Peak output of 70%
+  intakeConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
+  intakeConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
 
   intake.GetConfigurator().Apply(intakeConf);
   intakeFollower.GetConfigurator().Apply(intakeConf);

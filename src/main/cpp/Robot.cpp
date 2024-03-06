@@ -185,8 +185,8 @@ void Robot::TeleopPeriodic() {
   rightOut.Output = maxSpeed * (speed - speedTurn); 
 
   if (reverseDrive) {
-    leftDrive.SetInverted(-leftDrive.GetInverted());
-    rightDrive.SetInverted(-rightDrive.GetInverted());
+    leftDrive.SetInverted(!leftDrive.GetInverted());
+    rightDrive.SetInverted(!rightDrive.GetInverted());
     leftOut.Output = - leftOut.Output;
     rightOut.Output = - rightOut.Output;
   }
@@ -236,23 +236,23 @@ void Robot::TeleopPeriodic() {
   // wrist.SetPosition(wrist::home);
 
   // print out angular position of both arm and wrist
-  std::cout << "Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut << " degrees \n";
-  std::cout << "Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::gearOut << " degrees \n";
+  std::cout << "Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut << " degrees" << std::endl;
+  std::cout << "Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::gearOut << " degrees" << std::endl;
 
   armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   noteDetected = noteSensor.Get();
+  const double maxArmSpeed = slowArm ? 0.1 : 1.0; // FIXME there are currently no user inputs to change this
 
   if (!armMoving && !wristMoving) { // do nothing if the mechanism is still in motion
     switch (mechMode) {
       case Mech::Manual :
-        slowDownWereTesting = 0.1;
         armSpeed = (fabs(xbox.GetRightY()) > deadband) ? xbox.GetRightY() : 0.0;
         wristSpeed = (fabs(xbox.GetLeftY()) > deadband) ? xbox.GetLeftY() : 0.0;
-        armOut.Output = slowDownWereTesting * armSpeed;
-        wristOut.Output = - slowDownWereTesting * wristSpeed;
+        armOut.Output = maxArmSpeed * armSpeed;
+        wristOut.Output = - maxArmSpeed * wristSpeed; // FIXME is the sign on this correct or should this be handled by 'inverted'
 
-        std::cout << "Manual Mode: armSpeed" << armSpeed << " wristSpeed " << wristSpeed << "\n";
+        std::cout << "Manual Mode: armSpeed" << maxArmSpeed * armSpeed << " wristSpeed " << maxArmSpeed * wristSpeed << std::endl;
 
         arm.SetControl(armOut);
         wrist.SetControl(wristOut);
@@ -354,8 +354,6 @@ void Robot::RobotPeriodic() {
     std::cout << std::endl;
   }
 }
-
-
 
 #ifndef RUNNING_FRC_TESTS
 int main() {

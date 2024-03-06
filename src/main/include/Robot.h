@@ -78,7 +78,7 @@ class Robot : public frc::TimedRobot {
     bool armMoving = false;
     bool wristMoving = false;
 
-    double slowDownWereTesting = 0.0;
+    bool slowArm = true;
     double armSpeed = 0.0;
     double wristSpeed = 0.0;
 

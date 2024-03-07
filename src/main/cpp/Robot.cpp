@@ -57,7 +57,7 @@ void Robot::RobotInit() {
   armConf.MotorOutput.Inverted = true; // verified
   wristConf.MotorOutput.Inverted = true; // verified
 
-  // arm and wrist into break mode
+  // arm and wrist into brake mode
   armConf.MotorOutput.NeutralMode = phx::signals::NeutralModeValue::Brake;
   wristConf.MotorOutput.NeutralMode = phx::signals::NeutralModeValue::Brake;
 
@@ -102,21 +102,17 @@ void Robot::RobotInit() {
   mmWristConf.MotionMagicJerk = 200;
   wrist.GetConfigurator().Apply(wristConf);
 
-  /* assume start in home position */
+  // set to position 0 so we can track position accurately
   arm.SetPosition(0_tr);
   wrist.SetPosition(0_tr);
- // offsets for wrist and arm
+
+ // offsets for wrist and arm, as precision 0 is not quite 0.
   m_wristStartPos = wrist.GetPosition().GetValueAsDouble();
   m_armStartPos = arm.GetPosition().GetValueAsDouble();
-  std::cout << "m_wristStartPos: " << m_wristStartPos << " m_armStartPos" << m_armStartPos << std::endl;
+  DEBUG_MSG("m_wristStartPos: " << m_wristStartPos << " m_armStartPos" << m_armStartPos);
 
   /* Intake configuration */
   phx::configs::TalonFXConfiguration intakeConf{};
- 
-  /* Set rotation direction for the arm and wrist */
-  /**
-   * FIXME: these are RANDOMLY chosen - review literature and cad to verify
-  */
   intakeConf.MotorOutput.Inverted = false; // primary intake at left when facing the intake mechanism
   //intakeConf.MotorOutput.NeutralMode = phx::signals::NeutralModeValue::Brake;
 
@@ -126,7 +122,7 @@ void Robot::RobotInit() {
   /* Set up followers to follow leaders and retain the leaders' inversion settings */
   intakeFollower.SetControl(phx::controls::Follower{intake.GetDeviceID(), false});
 
-  // setup motor braking - 
+  // FIXME: setup motor braking but don't know how to verify
   leftDrive.SetControl(phx::controls::NeutralOut{});
   rightDrive.SetControl(phx::controls::NeutralOut{});
   arm.SetControl(phx::controls::StaticBrake{});
@@ -135,6 +131,7 @@ void Robot::RobotInit() {
   intakeOut.Output = intake::intakeOut;
  }
 
+// FIXME - this should be delayed by 3 seconds based on recommendations with robots leaving brake mode too early and moving in competition
 void Robot::DisabledPeriodic() {
   leftDrive.SetControl(phx::controls::NeutralOut{});
   rightDrive.SetControl(phx::controls::NeutralOut{});
@@ -151,7 +148,7 @@ void Robot::TeleopPeriodic() {
   */
   if (joystick.GetRawButtonPressed(3)) {
     slowDrive = !slowDrive;
-    std::cout << "limited maxSpeed: " << slowDrive;
+    DEBUG_MSG("limited maxSpeed: " << slowDrive);
   }
   const double maxSpeed = slowDrive ? 0.3 : 1.0;
 
@@ -162,7 +159,7 @@ void Robot::TeleopPeriodic() {
   */
   if (joystick.GetRawButtonPressed(2)) {
     reverseDrive = !reverseDrive;
-    std::cout << "reverse drive: " << reverseDrive;
+    DEBUG_MSG("reverse drive: " << reverseDrive);
   }
 
   /**
@@ -210,14 +207,16 @@ void Robot::TeleopPeriodic() {
   double inTakePosition = intake.GetPosition().GetValueAsDouble();
   //armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   //wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
-  //noteDetected = noteSensor.Get();
+
+  // FIXME : noteDetected not being used yet
+  noteDetected = noteSensor.Get();
   
-  if (m_printCount++ > 50) {
+  if (m_printCount++ > 100) {
     m_printCount = 0;
-    std::cout << "Arm position: " << armPosition << " velocity: " << arm.GetVelocity().GetValueAsDouble() << "\n";
-    std::cout << "Wrist position: " << wristPosition << " velocity: " <<  wrist.GetVelocity().GetValueAsDouble() << "\n";
-    std::cout << "Intake position: " << inTakePosition << " velocity: " << intake.GetVelocity().GetValueAsDouble() << "\n";
-    std::cout << "noteDetected: " << noteDetected << "\n";
+    DEBUG_MSG("Arm position: " << armPosition << " velocity: " << arm.GetVelocity().GetValueAsDouble() << "\n");
+    DEBUG_MSG("Wrist position: " << wristPosition << " velocity: " <<  wrist.GetVelocity().GetValueAsDouble() << "\n");
+    DEBUG_MSG("Intake position: " << inTakePosition << " velocity: " << intake.GetVelocity().GetValueAsDouble() << "\n");
+    DEBUG_MSG("noteDetected: " << noteDetected << "\n");
   }
  
 
@@ -252,15 +251,23 @@ void Robot::TeleopPeriodic() {
     arm.SetControl(m_brake);
   }
   
-  // Manual mode, slow arm and wrist speed while holding start button and x and y
-  if (xbox.GetStartButton()) {
-    slowDownWereTesting = 0.1;
-    armSpeed = (fabs(xbox.GetRightY()) > deadband) ? xbox.GetRightY() : 0.0;
-    wristSpeed = (fabs(xbox.GetLeftY()) > deadband) ? xbox.GetLeftY() : 0.0;
-    armOut.Output = slowDownWereTesting * armSpeed;
-    wristOut.Output = - slowDownWereTesting * wristSpeed;
+  // Manual mode, cycle through increasing speed output
+  if (xbox.GetBButtonPressed()) {
+    m_speedCycle = ((m_speedCycle % 10) + 1) / 10;
+    double armSpeed = arm.GetVelocity().GetValueAsDouble() * m_speedCycle;
+    double wristSpeed = wrist.GetVelocity().GetValueAsDouble() * m_speedCycle;
+    armOut.Output = armSpeed;
+    wristOut.Output = wristSpeed;
+    DEBUG_MSG("XboxBButton: Setting arm speed to:" << armSpeed << "wrist speed to: "  << wristSpeed << " m_speedCycle: " << m_speedCycle );
     arm.SetControl(armOut);
     wrist.SetControl(wristOut);
+  }
+
+  // Reset postion for arm and write due to slop in drive chain mechanisms
+  if (xbox.GetAButton()) {
+    DEBUG_MSG("XboxAButton: Recalibrating arm and wrist to 0, mechanism should be at home position!!!");
+    arm.SetPosition(0_tr);
+    wrist.SetPosition(0_tr);
   }
 }
 
@@ -274,16 +281,16 @@ void Robot::AutonomousInit() {
 void Robot::AutonomousPeriodic() {
   double speed = 0.0;
 
+  // we can vary speed or time to increase distance, speed of 0.1 is a safe speed
   if (m_timer.Get() >= 0_s && m_timer.Get() <= 2_s) {
     // drive forward
     speed = 0.1;
-    std::cout << "AutonomousPeriodic: speed=" << speed;
+    DEBUG_MSG("AutonomousPeriodic: speed=" << speed);
   } 
   else {
     speed = 0.0;
   }
-  //std::cout << "AutonomousPeriodic: speed=" << speed;
-
+  
   leftOut.Output = speed;
   rightOut.Output = speed; 
 

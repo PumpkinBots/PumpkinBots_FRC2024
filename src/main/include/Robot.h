@@ -42,6 +42,13 @@
 //local
 #include <Constants.h>
 
+#define DEBUG_ROBOT 1
+#ifdef DEBUG_ROBOT
+#define DEBUG_MSG(str) do { std::cout << str << std::endl; } while (false)
+#else
+#define DEBUG_MSG(str) do {} while (false)
+#endif
+
 namespace phx = ctre::phoenix6;
 
 class Robot : public frc::TimedRobot {
@@ -75,16 +82,6 @@ class Robot : public frc::TimedRobot {
     phx::controls::DutyCycleOut wristOut{0};
 
     phx::controls::StaticBrake m_brake{};
-
-    enum class Mech {Home, Intake, Delivery, AmpScore, Release, Climb, Manual};
-    Mech mechMode = Mech::Home;
-
-    bool armMoving = false;
-    bool wristMoving = false;
-
-    double slowDownWereTesting = 0.0;
-    double armSpeed = 0.0;
-    double wristSpeed = 0.0;
 
     /**
      * CONFIGURE INTAKE MOTORS
@@ -121,8 +118,8 @@ class Robot : public frc::TimedRobot {
     double m_wristStartPos = 0;
     double m_armStartPos = 0;
 
-    //Set up slew rate limiter
-    /* FIXME - what goes here? */
+    // duty cycle testing
+    int m_speedCycle = 0;
 
     //exactly what you think, its a timer
     frc::Timer m_timer;

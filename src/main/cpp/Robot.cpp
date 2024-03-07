@@ -55,7 +55,7 @@ void Robot::RobotInit() {
   
   /* Set rotation direction for the arm and wrist */
   armConf.MotorOutput.Inverted = true; // verified
-  wristConf.MotorOutput.Inverted = false; // verified
+  wristConf.MotorOutput.Inverted = true; // verified
 
   // arm and wrist into break mode
   armConf.MotorOutput.NeutralMode = phx::signals::NeutralModeValue::Brake;
@@ -103,8 +103,12 @@ void Robot::RobotInit() {
   wrist.GetConfigurator().Apply(wristConf);
 
   /* assume start in home position */
-  arm.SetPosition(arm::home);
-  wrist.SetPosition(arm::home);
+  arm.SetPosition(0_tr);
+  wrist.SetPosition(0_tr);
+ // offsets for wrist and arm
+  m_wristStartPos = wrist.GetPosition().GetValueAsDouble();
+  m_armStartPos = arm.GetPosition().GetValueAsDouble();
+  std::cout << "m_wristStartPos: " << m_wristStartPos << " m_armStartPos" << m_armStartPos << std::endl;
 
   /* Intake configuration */
   phx::configs::TalonFXConfiguration intakeConf{};
@@ -128,20 +132,14 @@ void Robot::RobotInit() {
   arm.SetControl(phx::controls::StaticBrake{});
   wrist.SetControl(phx::controls::StaticBrake{});
   intake.SetControl(phx::controls::NeutralOut{});
-
   intakeOut.Output = intake::intakeOut;
-
-  // offsets for wrist and arm
-  m_wristStartPos = wrist.GetPosition().GetValueAsDouble();
-  m_armStartPos = arm.GetPosition().GetValueAsDouble();
-  std::cout << "m_wristStartPos: " << m_wristStartPos << " m_armStartPos" << m_armStartPos << std::endl;
-}
+ }
 
 void Robot::DisabledPeriodic() {
   leftDrive.SetControl(phx::controls::NeutralOut{});
   rightDrive.SetControl(phx::controls::NeutralOut{});
-  arm.SetControl(phx::controls::StaticBrake{});
-  wrist.SetControl(phx::controls::StaticBrake{});
+  arm.SetControl(phx::controls::NeutralOut{});
+  wrist.SetControl(phx::controls::NeutralOut{});
   intake.SetControl(phx::controls::NeutralOut{});
 }
 
@@ -223,16 +221,16 @@ void Robot::TeleopPeriodic() {
   }
  
 
-  // inTake Control - Y is Up, A is down, else stop. If we have a noteDetected also stop
+  // inTake Control - Y is Spin, else stop
   if (xbox.GetYButton()) {
       intake.SetControl(intakeOut);
   } else {
     intake.SetControl(m_brake);
   }
 
-  const double wristMin = -0 + m_wristStartPos;
-  const double wristMax = 14.0 + m_wristStartPos;
-  const double wristStep = 0.1;
+  const double wristMin = 0.0 + m_wristStartPos;
+  const double wristMax = 18.0 + m_wristStartPos;
+  const double wristStep = 1.0;
   // Wrist Control - Left Bumper is down, Right Bumper is up, else stop
   if ((xbox.GetLeftBumper()) && (wristPosition > wristMin)) {
     wrist.SetControl(mmWrist.WithPosition((wristPosition-wristStep)*1_tr).WithSlot(0));
@@ -242,13 +240,13 @@ void Robot::TeleopPeriodic() {
     wrist.SetControl(m_brake);
   }
 
-  const double armMin = -5.0 + m_armStartPos;
-  const double armMax = 70.5 + m_armStartPos;
+  const double armMin = 0.0 + m_armStartPos;
+  const double armMax = 80.5 + m_armStartPos;
   const double armStep = 1.0;
   // Arm Control - Left Trigger is down, right trigger is up, else stop
-  if ((xbox.GetLeftTriggerAxis()) && (armPosition > armMin)){
+  if ((xbox.GetRightTriggerAxis()) && (armPosition > armMin)){
     arm.SetControl(mmArm.WithPosition((armPosition-armStep)*1_tr).WithSlot(0));
-  } else if ((xbox.GetRightTriggerAxis()) && (armPosition < armMax)) {
+  } else if ((xbox.GetLeftTriggerAxis()) && (armPosition < armMax)) {
     arm.SetControl(mmArm.WithPosition((armPosition+armStep)*1_tr).WithSlot(0));
   } else {
     arm.SetControl(m_brake);
@@ -264,6 +262,33 @@ void Robot::TeleopPeriodic() {
     arm.SetControl(armOut);
     wrist.SetControl(wristOut);
   }
+}
+
+void Robot::AutonomousInit() {
+    //Set timer to zero and start counting
+    m_timer.Reset();
+    m_timer.Start();
+    //autoMode = frc::SmartDashboard::GetNumber("Auto mode", 0);
+}
+
+void Robot::AutonomousPeriodic() {
+  double speed = 0.0;
+
+  if (m_timer.Get() >= 0_s && m_timer.Get() <= 2_s) {
+    // drive forward
+    speed = 0.1;
+    std::cout << "AutonomousPeriodic: speed=" << speed;
+  } 
+  else {
+    speed = 0.0;
+  }
+  //std::cout << "AutonomousPeriodic: speed=" << speed;
+
+  leftOut.Output = speed;
+  rightOut.Output = speed; 
+
+  leftDrive.SetControl(leftOut);
+  rightDrive.SetControl(rightOut);
 }
 
 #ifndef RUNNING_FRC_TESTS

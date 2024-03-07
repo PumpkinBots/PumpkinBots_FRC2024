@@ -30,6 +30,7 @@
 //motors
 #include <rev/CANSparkMax.h>
 #include <ctre/phoenix6/TalonFX.hpp>
+#include <ctre/phoenix6/configs/Configs.hpp>
 
 //camera
 #include <cameraserver/CameraServer.h>
@@ -68,13 +69,16 @@ class Robot : public frc::TimedRobot {
     phx::hardware::TalonFX wrist{can::wrist, CAN};
 
     phx::controls::MotionMagicExpoDutyCycle mmArm{arm::home};
-    phx::controls::MotionMagicExpoDutyCycle mmWrist{wrist::home};
-
+    phx::controls::MotionMagicExpoDutyCycle mmWrist{arm::home};
+    
     phx::controls::DutyCycleOut armOut{0};
     phx::controls::DutyCycleOut wristOut{0};
 
+    phx::controls::StaticBrake m_brake{};
+
     enum class Mech {Home, Intake, Delivery, AmpScore, Release, Climb, Manual};
     Mech mechMode = Mech::Home;
+
     bool armMoving = false;
     bool wristMoving = false;
 
@@ -90,6 +94,7 @@ class Robot : public frc::TimedRobot {
     phx::hardware::TalonFX intakeFollower{can::intakeFollower, CAN};
 
     phx::controls::DutyCycleOut intakeOut{0}; // Initialize output to 0%
+    phx::controls::MotionMagicExpoDutyCycle mmInTake{arm::home};
 
     // intake sensor
     frc::DigitalInput noteSensor{dio::noteSensor};
@@ -108,6 +113,13 @@ class Robot : public frc::TimedRobot {
 
     // Reverse drive direction support
     bool reverseDrive = false;
+
+    // control printout spew
+    int m_printCount = 0;
+
+    // offsets to use for limits when position is not 0
+    double m_wristStartPos = 0;
+    double m_armStartPos = 0;
 
     //Set up slew rate limiter
     /* FIXME - what goes here? */

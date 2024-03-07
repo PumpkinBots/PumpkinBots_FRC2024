@@ -57,6 +57,16 @@ void Robot::RobotInit() {
   armConf.MotorOutput.Inverted = true; // verified
   wristConf.MotorOutput.Inverted = false; // verified
 
+  // arm and wrist into break mode
+  armConf.MotorOutput.NeutralMode = phx::signals::NeutralModeValue::Brake;
+  wristConf.MotorOutput.NeutralMode = phx::signals::NeutralModeValue::Brake;
+
+  // setup sensor to shaft ratio to 1 for now
+  phx::configs::FeedbackConfigs &armfdb = armConf.Feedback;
+  armfdb.SensorToMechanismRatio = 1;
+  phx::configs::FeedbackConfigs &wristfdb = wristConf.Feedback;
+  wristfdb.SensorToMechanismRatio = 1;
+
   /**
    * slot0 defines the PID characteristics of MotionMagic
    * FIXME: characterize this properly - this is copy-pasta crap
@@ -70,9 +80,9 @@ void Robot::RobotInit() {
   armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmArmConf = armConf.MotionMagic;
-  mmArmConf.MotionMagicCruiseVelocity = 80;
-  mmArmConf.MotionMagicAcceleration = 160;
-  mmArmConf.MotionMagicJerk = 1600;
+  mmArmConf.MotionMagicCruiseVelocity = 1;
+  mmArmConf.MotionMagicAcceleration = 1;
+  mmArmConf.MotionMagicJerk = 200;
   arm.GetConfigurator().Apply(armConf);
   armFollower.GetConfigurator().Apply(armConf);
 
@@ -87,23 +97,24 @@ void Robot::RobotInit() {
   wristSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmWristConf = wristConf.MotionMagic;
-  mmWristConf.MotionMagicCruiseVelocity = 80;
-  mmWristConf.MotionMagicAcceleration = 160;
-  mmWristConf.MotionMagicJerk = 1600;
+  mmWristConf.MotionMagicCruiseVelocity = 1;
+  mmWristConf.MotionMagicAcceleration = 1;
+  mmWristConf.MotionMagicJerk = 200;
   wrist.GetConfigurator().Apply(wristConf);
 
   /* assume start in home position */
   arm.SetPosition(arm::home);
-  wrist.SetPosition(wrist::home);
+  wrist.SetPosition(arm::home);
 
   /* Intake configuration */
   phx::configs::TalonFXConfiguration intakeConf{};
-  
+ 
   /* Set rotation direction for the arm and wrist */
   /**
    * FIXME: these are RANDOMLY chosen - review literature and cad to verify
   */
   intakeConf.MotorOutput.Inverted = false; // primary intake at left when facing the intake mechanism
+  //intakeConf.MotorOutput.NeutralMode = phx::signals::NeutralModeValue::Brake;
 
   intake.GetConfigurator().Apply(intakeConf);
   intakeFollower.GetConfigurator().Apply(intakeConf);
@@ -111,7 +122,19 @@ void Robot::RobotInit() {
   /* Set up followers to follow leaders and retain the leaders' inversion settings */
   intakeFollower.SetControl(phx::controls::Follower{intake.GetDeviceID(), false});
 
+  // setup motor braking - 
+  leftDrive.SetControl(phx::controls::NeutralOut{});
+  rightDrive.SetControl(phx::controls::NeutralOut{});
+  arm.SetControl(phx::controls::StaticBrake{});
+  wrist.SetControl(phx::controls::StaticBrake{});
+  intake.SetControl(phx::controls::NeutralOut{});
+
   intakeOut.Output = intake::intakeOut;
+
+  // offsets for wrist and arm
+  m_wristStartPos = wrist.GetPosition().GetValueAsDouble();
+  m_armStartPos = arm.GetPosition().GetValueAsDouble();
+  std::cout << "m_wristStartPos: " << m_wristStartPos << " m_armStartPos" << m_armStartPos << std::endl;
 }
 
 void Robot::DisabledPeriodic() {
@@ -183,123 +206,64 @@ void Robot::TeleopPeriodic() {
   leftDrive.SetControl(leftOut);
   rightDrive.SetControl(rightOut);
 
-  /**
-   * Robot starts in "home" position - arm down, and intake folded up, rollers locked
-   * A (force home or finish climb): returns all systems to home. If the hooks are on the chain, this is the final climb sequence.
-   * B (intake sequence): moves the wrist so the intake is ready to pick up a note, and spins rollers inward until a note is detected. Then stops the rollers, and returns to home.
-   * X (release note): moves the wrist to deploy the intake, spins the rollers in reverse to "set down the note", and returns to home.
-   * Y (climbing position): moves the arm up, but keeps the intake in home position to expose climbing hooks.
-   * L1 (scoring part 1): moves the arm up, and adjusts the wrist so it aligns with the amp.
-   * R1 (scoring part 2): spins intake motors to eject the note into the amp and returns to home
-  */
-
-  /**
-   * ARM/WRIST OUTPUT
-  */
+  // Arm, wrist and intake control
+  double armPosition = arm.GetPosition().GetValueAsDouble();
+  double wristPosition = wrist.GetPosition().GetValueAsDouble();
+  double inTakePosition = intake.GetPosition().GetValueAsDouble();
+  //armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
+  //wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
+  //noteDetected = noteSensor.Get();
   
-  /* xbox input (mech) */
-  // refactor? https://docs.wpilib.org/en/stable/docs/software/commandbased/binding-commands-to-triggers.html
-  // not a trivial refactor as states chain to each other (usually back to Mech::HOME)
-
-  if (xbox.GetAButton()) {
-    mechMode = Mech::Home;
-  } else if (xbox.GetBButton()) {
-    mechMode = Mech::Intake;
-  } else if (xbox.GetXButton()) {
-    mechMode = Mech::Release;
-  } else if (xbox.GetYButton()) {
-    mechMode = Mech::Climb;
-  } else if (xbox.GetLeftBumper()) {
-    mechMode = Mech::Delivery;
-  } else if (xbox.GetRightBumper()) {
-    mechMode = Mech::AmpScore;
-  } else if (xbox.GetStartButton()) {
-    mechMode = Mech::Manual;
+  if (m_printCount++ > 50) {
+    m_printCount = 0;
+    std::cout << "Arm position: " << armPosition << " velocity: " << arm.GetVelocity().GetValueAsDouble() << "\n";
+    std::cout << "Wrist position: " << wristPosition << " velocity: " <<  wrist.GetVelocity().GetValueAsDouble() << "\n";
+    std::cout << "Intake position: " << inTakePosition << " velocity: " << intake.GetVelocity().GetValueAsDouble() << "\n";
+    std::cout << "noteDetected: " << noteDetected << "\n";
   }
-  
-  // add support for manual mode 
-  // xbox.GetRightTriggerAxis() is shoot
-  // -xbox.GetLeftY() is wrist moving away from home (positive angle)
-  // ?-?xbox.GetRightY() is arm moving away from home (positive angle)
-  // arm.SetPosition(arm::home);
-  // wrist.SetPosition(wrist::home);
+ 
 
-  // print out angular position of both arm and wrist
-  std::cout << "Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut << " degrees \n";
-  std::cout << "Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::gearOut << " degrees \n";
-
-  armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
-  wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
-  noteDetected = noteSensor.Get();
-
-  if (!armMoving && !wristMoving) { // do nothing if the mechanism is still in motion
-    switch (mechMode) {
-      case Mech::Manual :
-        slowDownWereTesting = 0.1;
-        armSpeed = (fabs(xbox.GetRightY()) > deadband) ? xbox.GetRightY() : 0.0;
-        wristSpeed = (fabs(xbox.GetLeftY()) > deadband) ? xbox.GetLeftY() : 0.0;
-        armOut.Output = slowDownWereTesting * armSpeed;
-        wristOut.Output = - slowDownWereTesting * wristSpeed;
-        arm.SetControl(armOut);
-        wrist.SetControl(wristOut);
-
-        if (xbox.GetBackButton()) {
-          arm.SetPosition(arm::home);
-          wrist.SetPosition(wrist::home);
-        }
-        break;
-
-      case Mech::Home :
-        intake.SetControl(phx::controls::StaticBrake{});
-        arm.SetControl(mmArm.WithPosition(arm::home).WithSlot(0));
-        wrist.SetControl(mmWrist.WithPosition(wrist::home).WithSlot(0));
-        break;
-
-      case Mech::Intake :
-        arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
-        wrist.SetControl(mmWrist.WithPosition(wrist::intake).WithSlot(0));
-        if (!noteDetected && !armMoving && !wristMoving) {
-          intake.SetControl(intakeOut);
-        }
-        if (noteDetected) {
-          if (!armMoving && !wristMoving) {
-            mechMode = Mech::Home; // reset to home
-          }
-        }
-        break;
-
-      case Mech::Delivery :
-        arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
-        wrist.SetControl(mmWrist.WithPosition(wrist::amp).WithSlot(0));
-        break;
-
-      case Mech::AmpScore :
-        arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
-        wrist.SetControl(mmWrist.WithPosition(wrist::amp).WithSlot(0));
-        if (!armMoving && !wristMoving) {
-          intake.SetControl(intakeOut);
-          mechMode = Mech::Home; // reset to home
-        }
-        break;
-
-      case Mech::Release :
-        arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
-        wrist.SetControl(mmWrist.WithPosition(wrist::intake).WithSlot(0));
-        if (!armMoving && !wristMoving) {
-          intake.SetInverted(!intake.GetInverted()); // reverse intake motors
-          intake.SetControl(intakeOut);
-          intake.SetInverted(!intake.GetInverted()); // revert to standard direction
-          mechMode = Mech::Home; // reset to home
-        }
-        break;
-
-      case Mech::Climb :
-        arm.SetControl(mmArm.WithPosition(arm::climb).WithSlot(0));
-        wrist.SetControl(mmWrist.WithPosition(wrist::climb).WithSlot(0));
-        break;
-    }
+  // inTake Control - Y is Up, A is down, else stop. If we have a noteDetected also stop
+  if (xbox.GetYButton()) {
+      intake.SetControl(intakeOut);
+  } else {
+    intake.SetControl(m_brake);
   }
 
+  const double wristMin = -0 + m_wristStartPos;
+  const double wristMax = 14.0 + m_wristStartPos;
+  const double wristStep = 0.1;
+  // Wrist Control - Left Bumper is down, Right Bumper is up, else stop
+  if ((xbox.GetLeftBumper()) && (wristPosition > wristMin)) {
+    wrist.SetControl(mmWrist.WithPosition((wristPosition-wristStep)*1_tr).WithSlot(0));
+  } else if ((xbox.GetRightBumper()) && (wristPosition < wristMax)) {
+    wrist.SetControl(mmWrist.WithPosition((wristPosition+wristStep)*1_tr).WithSlot(0));
+  } else {
+    wrist.SetControl(m_brake);
+  }
+
+  const double armMin = -5.0 + m_armStartPos;
+  const double armMax = 70.5 + m_armStartPos;
+  const double armStep = 1.0;
+  // Arm Control - Left Trigger is down, right trigger is up, else stop
+  if ((xbox.GetLeftTriggerAxis()) && (armPosition > armMin)){
+    arm.SetControl(mmArm.WithPosition((armPosition-armStep)*1_tr).WithSlot(0));
+  } else if ((xbox.GetRightTriggerAxis()) && (armPosition < armMax)) {
+    arm.SetControl(mmArm.WithPosition((armPosition+armStep)*1_tr).WithSlot(0));
+  } else {
+    arm.SetControl(m_brake);
+  }
+  
+  // Manual mode, slow arm and wrist speed while holding start button and x and y
+  if (xbox.GetStartButton()) {
+    slowDownWereTesting = 0.1;
+    armSpeed = (fabs(xbox.GetRightY()) > deadband) ? xbox.GetRightY() : 0.0;
+    wristSpeed = (fabs(xbox.GetLeftY()) > deadband) ? xbox.GetLeftY() : 0.0;
+    armOut.Output = slowDownWereTesting * armSpeed;
+    wristOut.Output = - slowDownWereTesting * wristSpeed;
+    arm.SetControl(armOut);
+    wrist.SetControl(wristOut);
+  }
 }
 
 #ifndef RUNNING_FRC_TESTS

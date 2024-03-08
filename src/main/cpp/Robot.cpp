@@ -20,8 +20,9 @@ namespace phx = ctre::phoenix6;
 void Robot::RobotInit() {
 
   frc::SmartDashboard::PutNumber("Auto mode", 0);
-
+#ifdef ROBOT_CAMERA
   frc::CameraServer::StartAutomaticCapture();
+#endif
 
   /**
    * DRIVE MOTOR CONFIGURATION
@@ -75,9 +76,9 @@ void Robot::RobotInit() {
   armSlot0Conf.kS = 0.05; // Add 0.25 V output to overcome static friction
   armSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   armSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  armSlot0Conf.kP = 0.001; // A position error of 2.5 rotations results in 12 V output
-  armSlot0Conf.kI = 0.0005; // no output for integrated error
-  armSlot0Conf.kD = 0.01; // A velocity error of 1 rps results in 0.1 V output
+  armSlot0Conf.kP = 0.0; // A position error of 2.5 rotations results in 12 V output
+  armSlot0Conf.kI = 0.0; // no output for integrated error
+  armSlot0Conf.kD = 0.0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmArmConf = armConf.MotionMagic;
   mmArmConf.MotionMagicCruiseVelocity = 2;
@@ -92,9 +93,9 @@ void Robot::RobotInit() {
   wristSlot0Conf.kS = 0.05; // Add 0.25 V output to overcome static friction
   wristSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   wristSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  wristSlot0Conf.kP = 0.001; // A position error of 2.5 rotations results in 12 V output
-  wristSlot0Conf.kI = 0.0005; // no output for integrated error
-  wristSlot0Conf.kD = 0.01; // A velocity error of 1 rps results in 0.1 V output
+  wristSlot0Conf.kP = 0.0; // A position error of 2.5 rotations results in 12 V output
+  wristSlot0Conf.kI = 0.0; // no output for integrated error
+  wristSlot0Conf.kD = 0.0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmWristConf = wristConf.MotionMagic;
   mmWristConf.MotionMagicCruiseVelocity = 1.0;
@@ -204,7 +205,6 @@ void Robot::TeleopPeriodic() {
   // Arm, wrist and intake control
   double armPosition = arm.GetPosition().GetValueAsDouble();
   double wristPosition = wrist.GetPosition().GetValueAsDouble();
-  double inTakePosition = intake.GetPosition().GetValueAsDouble();
   //armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   //wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
 
@@ -215,7 +215,6 @@ void Robot::TeleopPeriodic() {
     m_printCount = 0;
     DEBUG_MSG("Arm position: " << armPosition << " velocity: " << arm.GetVelocity().GetValueAsDouble());
     DEBUG_MSG("Wrist position: " << wristPosition << " velocity: " <<  wrist.GetVelocity().GetValueAsDouble());
-    DEBUG_MSG("Intake position: " << inTakePosition << " velocity: " << intake.GetVelocity().GetValueAsDouble());
     DEBUG_MSG("noteDetected: " << noteDetected << "\n");
   }
  
@@ -244,7 +243,7 @@ void Robot::TeleopPeriodic() {
   }
 
   const double armMin = 0.0 + m_armStartPos;
-  const double armMax = 80.5 + m_armStartPos;
+  const double armMax = 63 + m_armStartPos;
   const double armStep = 2.0;
   // Arm Control - Left Trigger is down, right trigger is up, else stop
   if ((xbox.GetRightTriggerAxis()) && (armPosition > armMin)){

@@ -75,14 +75,14 @@ void Robot::RobotInit() {
   armSlot0Conf.kS = 0.05; // Add 0.25 V output to overcome static friction
   armSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   armSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  armSlot0Conf.kP = 0; // A position error of 2.5 rotations results in 12 V output
-  armSlot0Conf.kI = 0; // no output for integrated error
-  armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
+  armSlot0Conf.kP = 0.001; // A position error of 2.5 rotations results in 12 V output
+  armSlot0Conf.kI = 0.0005; // no output for integrated error
+  armSlot0Conf.kD = 0.01; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmArmConf = armConf.MotionMagic;
-  mmArmConf.MotionMagicCruiseVelocity = 1;
-  mmArmConf.MotionMagicAcceleration = 1;
-  mmArmConf.MotionMagicJerk = 200;
+  mmArmConf.MotionMagicCruiseVelocity = 2;
+  mmArmConf.MotionMagicAcceleration = 2;
+  mmArmConf.MotionMagicJerk = 50;
   arm.GetConfigurator().Apply(armConf);
   armFollower.GetConfigurator().Apply(armConf);
 
@@ -92,14 +92,14 @@ void Robot::RobotInit() {
   wristSlot0Conf.kS = 0.05; // Add 0.25 V output to overcome static friction
   wristSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   wristSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  wristSlot0Conf.kP = 0; // A position error of 2.5 rotations results in 12 V output
-  wristSlot0Conf.kI = 0; // no output for integrated error
-  wristSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
+  wristSlot0Conf.kP = 0.001; // A position error of 2.5 rotations results in 12 V output
+  wristSlot0Conf.kI = 0.0005; // no output for integrated error
+  wristSlot0Conf.kD = 0.01; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmWristConf = wristConf.MotionMagic;
-  mmWristConf.MotionMagicCruiseVelocity = 1;
-  mmWristConf.MotionMagicAcceleration = 1;
-  mmWristConf.MotionMagicJerk = 200;
+  mmWristConf.MotionMagicCruiseVelocity = 1.0;
+  mmWristConf.MotionMagicAcceleration = 1.0;
+  mmWristConf.MotionMagicJerk = 50;
   wrist.GetConfigurator().Apply(wristConf);
 
   // set to position 0 so we can track position accurately
@@ -188,12 +188,12 @@ void Robot::TeleopPeriodic() {
    * or it might be better to leave as-is as it further limits turning at speed
    * FIXME: explore alternate implementations of turning + speed to make it as smooth and predictable as possible for the driver
   */
-  leftOut.Output = maxSpeed * (speed + speedTurn);
-  rightOut.Output = maxSpeed * (speed - speedTurn); 
+  leftOut.Output = maxSpeed * (speed - speedTurn);
+  rightOut.Output = maxSpeed * (speed + speedTurn); 
 
   if (reverseDrive) {
-    leftDrive.SetInverted(-leftDrive.GetInverted());
-    rightDrive.SetInverted(-rightDrive.GetInverted());
+    leftDrive.SetInverted(!leftDrive.GetInverted());
+    rightDrive.SetInverted(!rightDrive.GetInverted());
     leftOut.Output = - leftOut.Output;
     rightOut.Output = - rightOut.Output;
   }
@@ -211,11 +211,11 @@ void Robot::TeleopPeriodic() {
   // FIXME : noteDetected not being used yet
   noteDetected = noteSensor.Get();
   
-  if (m_printCount++ > 100) {
+  if (m_printCount++ > 200) {
     m_printCount = 0;
-    DEBUG_MSG("Arm position: " << armPosition << " velocity: " << arm.GetVelocity().GetValueAsDouble() << "\n");
-    DEBUG_MSG("Wrist position: " << wristPosition << " velocity: " <<  wrist.GetVelocity().GetValueAsDouble() << "\n");
-    DEBUG_MSG("Intake position: " << inTakePosition << " velocity: " << intake.GetVelocity().GetValueAsDouble() << "\n");
+    DEBUG_MSG("Arm position: " << armPosition << " velocity: " << arm.GetVelocity().GetValueAsDouble());
+    DEBUG_MSG("Wrist position: " << wristPosition << " velocity: " <<  wrist.GetVelocity().GetValueAsDouble());
+    DEBUG_MSG("Intake position: " << inTakePosition << " velocity: " << intake.GetVelocity().GetValueAsDouble());
     DEBUG_MSG("noteDetected: " << noteDetected << "\n");
   }
  
@@ -223,12 +223,16 @@ void Robot::TeleopPeriodic() {
   // inTake Control - Y is Spin, else stop
   if (xbox.GetYButton()) {
       intake.SetControl(intakeOut);
+  } else if (xbox.GetAButton()) {
+      intake.SetInverted(!intake.GetInverted());
+      intake.SetControl(intakeOut);
+      intake.SetInverted(!intake.GetInverted());
   } else {
     intake.SetControl(m_brake);
   }
 
   const double wristMin = 0.0 + m_wristStartPos;
-  const double wristMax = 18.0 + m_wristStartPos;
+  const double wristMax = 40.0 + m_wristStartPos;
   const double wristStep = 1.0;
   // Wrist Control - Left Bumper is down, Right Bumper is up, else stop
   if ((xbox.GetLeftBumper()) && (wristPosition > wristMin)) {
@@ -241,7 +245,7 @@ void Robot::TeleopPeriodic() {
 
   const double armMin = 0.0 + m_armStartPos;
   const double armMax = 80.5 + m_armStartPos;
-  const double armStep = 1.0;
+  const double armStep = 2.0;
   // Arm Control - Left Trigger is down, right trigger is up, else stop
   if ((xbox.GetRightTriggerAxis()) && (armPosition > armMin)){
     arm.SetControl(mmArm.WithPosition((armPosition-armStep)*1_tr).WithSlot(0));
@@ -264,7 +268,7 @@ void Robot::TeleopPeriodic() {
   }
 
   // Reset postion for arm and write due to slop in drive chain mechanisms
-  if (xbox.GetAButton()) {
+  if (xbox.GetXButton()) {
     DEBUG_MSG("XboxAButton: Recalibrating arm and wrist to 0, mechanism should be at home position!!!");
     arm.SetPosition(0_tr);
     wrist.SetPosition(0_tr);

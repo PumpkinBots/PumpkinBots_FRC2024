@@ -72,7 +72,7 @@ void Robot::RobotInit() {
   armSlot0Conf.kS = 0.05; // Add 0.25 V output to overcome static friction
   armSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   armSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  armSlot0Conf.kP = 0; // A position error of 2.5 rotations results in 12 V output
+  armSlot0Conf.kP = 0.001; // A position error of 2.5 rotations results in 12 V output
   armSlot0Conf.kI = 0; // no output for integrated error
   armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
@@ -89,7 +89,7 @@ void Robot::RobotInit() {
   wristSlot0Conf.kS = 0.05; // Add 0.25 V output to overcome static friction
   wristSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   wristSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  wristSlot0Conf.kP = 0; // A position error of 2.5 rotations results in 12 V output
+  wristSlot0Conf.kP = 0.001; // A position error of 2.5 rotations results in 12 V output
   wristSlot0Conf.kI = 0; // no output for integrated error
   wristSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
@@ -236,8 +236,8 @@ void Robot::TeleopPeriodic() {
   // wrist.SetPosition(wrist::home);
 
   // print out angular position of both arm and wrist
-  DEBUG_MSG("Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut << " degrees");
-  DEBUG_MSG("Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::gearOut << " degrees");
+  DEBUG_MSG("Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::armGearOut << " degrees");
+  DEBUG_MSG("Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::wristGearOut << " degrees");
 
   armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;

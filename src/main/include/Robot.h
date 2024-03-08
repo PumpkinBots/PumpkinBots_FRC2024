@@ -41,6 +41,13 @@
 //local
 #include <Constants.h>
 
+//#define DEBUG_ROBOT
+#ifdef DEBUG_ROBOT
+#define DEBUG_MSG(str) do { std::cout << str << std::endl; } while (false)
+#else
+#define DEBUG_MSG(str) do {} while (false)
+#endif
+
 namespace phx = ctre::phoenix6;
 
 class Robot : public frc::TimedRobot {

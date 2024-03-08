@@ -152,7 +152,7 @@ void Robot::TeleopPeriodic() {
   */
   if (joystick.GetRawButtonPressed(2)) {
     reverseDrive = !reverseDrive;
-    std::cout << "reverse drive: " << reverseDrive;
+    std::cout << "reverse drive: " << reverseDrive << std::endl;
   }
 
   /**
@@ -236,13 +236,13 @@ void Robot::TeleopPeriodic() {
   // wrist.SetPosition(wrist::home);
 
   // print out angular position of both arm and wrist
-  std::cout << "Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut << " degrees" << std::endl;
-  std::cout << "Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::gearOut << " degrees" << std::endl;
+  DEBUG_MSG("Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut << " degrees");
+  DEBUG_MSG("Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::gearOut << " degrees");
 
   armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   noteDetected = noteSensor.Get();
-  const double maxArmSpeed = slowArm ? 0.1 : 1.0; // FIXME there are currently no user inputs to change this
+  const double maxArmSpeed = slowArm ? 0.1 : 1.0; // FIXME: there are currently no user inputs to change this
 
   if (!armMoving && !wristMoving) { // do nothing if the mechanism is still in motion
     switch (mechMode) {
@@ -252,7 +252,7 @@ void Robot::TeleopPeriodic() {
         armOut.Output = maxArmSpeed * armSpeed;
         wristOut.Output = - maxArmSpeed * wristSpeed; // FIXME is the sign on this correct or should this be handled by 'inverted'
 
-        std::cout << "Manual Mode: armSpeed" << maxArmSpeed * armSpeed << " wristSpeed " << maxArmSpeed * wristSpeed << std::endl;
+        DEBUG_MSG("Manual Mode: armSpeed" << maxArmSpeed * armSpeed << " wristSpeed " << maxArmSpeed * wristSpeed);
 
         arm.SetControl(armOut);
         wrist.SetControl(wristOut);
@@ -327,7 +327,7 @@ void Robot::AutonomousInit() {
 void Robot::AutonomousPeriodic() {
   if (joystick.GetRawButtonPressed(3)) {
     slowDrive = !slowDrive;
-    fmt::print("limited maxSpeed: ", slowDrive);
+    DEBUG_MSG("limited maxSpeed: " << slowDrive);
   }
   const double maxSpeed = slowDrive ? 0.3 : 1.0;
   double speed = 0.0;
@@ -335,7 +335,7 @@ void Robot::AutonomousPeriodic() {
   if (m_timer.Get() >= 0_s && m_timer.Get() <= 2_s) {
     // drive forward
     speed = 0.1;
-    std::cout << "AutonomousPeriodic: speed=" << speed;
+    DEBUG_MSG("AutonomousPeriodic: speed = " << speed);
   } 
   
   leftOut.Output = maxSpeed * speed;
@@ -349,9 +349,9 @@ void Robot::AutonomousPeriodic() {
 void Robot::RobotPeriodic() {
   if (m_printCount++ > 10) {
     m_printCount = 0;
-    std::cout << "Arm Pos: " << arm.GetPosition() << "Wrist Pos: " << wrist.GetPosition() << std::endl;
-    std::cout << "Arm Vel: " << arm.GetVelocity() << "Wrist Vel: " << wrist.GetVelocity() << std::endl;
-    std::cout << std::endl;
+    DEBUG_MSG("Arm Pos: " << arm.GetPosition() << "Wrist Pos: " << wrist.GetPosition());
+    DEBUG_MSG("Arm Vel: " << arm.GetVelocity() << "Wrist Vel: " << wrist.GetVelocity());
+    DEBUG_MSG();
   }
 }
 

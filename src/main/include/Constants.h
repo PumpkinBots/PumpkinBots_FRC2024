@@ -56,29 +56,31 @@ namespace intake {
 }
 
 /**
- * FIXME: all of the definitions below DO NOT account for gear ratios - they will need to be adjusted
  * at full speed, a Kraken is 6K rpm
  * eg gearOut = 60; // 3:1 + 4:1 + 5:1
  * the wrist is 1:1 
  * speed of the output shaft on the gearbox = speed of the wrist rotation
  * the rollers are 30:24 or 5:4 // this shouldn't matter much
- * and the arm is 52:10 (or 26:5) 
+ * and the arm is 52:15
  * so whatever gearbox you guys use for the arm, for every time that rotates once, the arm will rotate about 1/5 of a rotation
 */
 namespace arm {
-	static constexpr double gearOut = 60.0 * 52/10; // gearIn is assumed 1 -- this needs to encompass the 52:10 belt drive ratio
-	static constexpr rot home = (rot) gearOut * 0.0;
-	static constexpr rot intake = (rot) gearOut * 0.0;
-	static constexpr rot amp = (rot) gearOut * 100/360;
-	static constexpr rot climb = (rot) gearOut * 90/360;
+	static constexpr double armGearOut = 60.0 * 52/15; // gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
+	static constexpr rot home = (rot) armGearOut * (0/360); // 0 degrees
+	static constexpr rot intake = (rot) armGearOut * (0/360); // 0 degrees
+	static constexpr rot amp = (rot) armGearOut * (100/360); // 100 degrees
+	static constexpr rot climb = (rot) armGearOut * (90/360); // 90 degrees
 }
 
+//DEBUG_MSG("Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut << " degrees");
+// 
+
 namespace wrist {
-	static constexpr double gearOut = 60.0; // gearIn is assumed 1 -- belt drive ratio is 1:1
-	static constexpr rot home = (rot) gearOut * 150/360;
-	static constexpr rot intake = (rot) gearOut * 0.0;
-	static constexpr rot amp = (rot) gearOut * 35/360;
-	static constexpr rot climb = (rot) gearOut * 150/360;
+	static constexpr double wristGearOut = 125.0; // gearIn is assumed 1, planetary gearbox is 3*5:1 (125:1), belt drive ratio is 1:1
+	static constexpr rot home = (rot) wristGearOut * (150/360); // 150 degrees
+	static constexpr rot intake = (rot) wristGearOut * (0/360); // 0 degrees
+	static constexpr rot amp = (rot) wristGearOut * (35/360); // 35 degrees
+	static constexpr rot climb = (rot) wristGearOut * (150/360); // 150 degrees
 }
 
 /**

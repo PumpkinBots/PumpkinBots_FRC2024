@@ -76,7 +76,7 @@ namespace arm {
 // 
 
 namespace wrist {
-	static constexpr double wristGearOut = 125.0; // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), belt drive ratio is 1:1
+	static constexpr double wristGearOut = 125.0 * 15/10; // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), belt drive ratio is 1:1
 	static constexpr rot home = (rot) wristGearOut * (150/360); // 150 degrees
 	static constexpr rot intake = (rot) wristGearOut * (0/360); // 0 degrees
 	static constexpr rot amp = (rot) wristGearOut * (35/360); // 35 degrees

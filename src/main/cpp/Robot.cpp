@@ -58,10 +58,10 @@ void Robot::RobotInit() {
   wristConf.MotorOutput.Inverted = false; // verified
 
   // limit dutycycles during calibration
-  armConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
-  armConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
-  wristConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
-  wristConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
+  //armConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
+  //armConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
+  //wristConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
+  //wristConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
 
 
   /**
@@ -77,8 +77,8 @@ void Robot::RobotInit() {
   armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmArmConf = armConf.MotionMagic;
-  mmArmConf.MotionMagicCruiseVelocity = 1;
-  mmArmConf.MotionMagicAcceleration = 1;
+  mmArmConf.MotionMagicCruiseVelocity = 20;
+  mmArmConf.MotionMagicAcceleration = 20;
   mmArmConf.MotionMagicJerk = 200;
   arm.GetConfigurator().Apply(armConf);
   armFollower.GetConfigurator().Apply(armConf);
@@ -94,14 +94,17 @@ void Robot::RobotInit() {
   wristSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmWristConf = wristConf.MotionMagic;
-  mmWristConf.MotionMagicCruiseVelocity = 1;
-  mmWristConf.MotionMagicAcceleration = 1;
+  mmWristConf.MotionMagicCruiseVelocity = 20;
+  mmWristConf.MotionMagicAcceleration = 20;
   mmWristConf.MotionMagicJerk = 200;
   wrist.GetConfigurator().Apply(wristConf);
 
   /* assume start in home position */
   arm.SetPosition(arm::home);
   wrist.SetPosition(wrist::home);
+
+  DEBUG_MSG("armGearOut = " << arm::armGearOut);
+  DEBUG_MSG("wristGearOut = " << wrist::wristGearOut);
 
   /* Intake configuration */
   phx::configs::TalonFXConfiguration intakeConf{};
@@ -113,8 +116,8 @@ void Robot::RobotInit() {
   intakeConf.MotorOutput.Inverted = false; // primary intake at left when facing the intake mechanism
 
   // limit duty cycles during testing
-  intakeConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
-  intakeConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
+  //intakeConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
+  //intakeConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
 
   intake.GetConfigurator().Apply(intakeConf);
   intakeFollower.GetConfigurator().Apply(intakeConf);
@@ -152,7 +155,7 @@ void Robot::TeleopPeriodic() {
   */
   if (joystick.GetRawButtonPressed(2)) {
     reverseDrive = !reverseDrive;
-    std::cout << "reverse drive: " << reverseDrive << std::endl;
+    DEBUG_MSG("reverse drive: " << reverseDrive);
   }
 
   /**
@@ -351,7 +354,6 @@ void Robot::RobotPeriodic() {
     m_printCount = 0;
     DEBUG_MSG("Arm Pos: " << arm.GetPosition() << "Wrist Pos: " << wrist.GetPosition());
     DEBUG_MSG("Arm Vel: " << arm.GetVelocity() << "Wrist Vel: " << wrist.GetVelocity());
-    DEBUG_MSG();
   }
 }
 

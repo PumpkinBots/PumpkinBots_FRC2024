@@ -65,7 +65,7 @@ namespace intake {
  * so whatever gearbox you guys use for the arm, for every time that rotates once, the arm will rotate about 1/5 of a rotation
 */
 namespace arm {
-	static constexpr double armGearOut = 60.0 * 52/15; // gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
+	static constexpr double armGearOut = 60.0 * (52/15); // gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
 	static constexpr rot home = (rot) armGearOut * (0/360); // 0°
 	static constexpr rot intake = (rot) armGearOut * (0/360); // 0°
 	static constexpr rot amp = (rot) armGearOut * (100/360); // 100°
@@ -76,7 +76,7 @@ namespace arm {
 // 
 
 namespace wrist {
-	static constexpr double wristGearOut = 125.0 * 15/10; // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), belt drive ratio is 1:1
+	static constexpr double wristGearOut = 125.0 * (15/10); // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), belt drive ratio is 1:1
 	static constexpr rot home = (rot) wristGearOut * (150/360); // 150°
 	static constexpr rot intake = (rot) wristGearOut * (0/360); // 0°
 	static constexpr rot amp = (rot) wristGearOut * (35/360); // 35°

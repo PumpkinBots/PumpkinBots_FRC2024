@@ -66,10 +66,10 @@ namespace intake {
 */
 namespace arm {
 	static constexpr double armGearOut = 60.0 * 52/15; // gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
-	static constexpr rot home = (rot) armGearOut * (0/360); // 0 degrees
-	static constexpr rot intake = (rot) armGearOut * (0/360); // 0 degrees
-	static constexpr rot amp = (rot) armGearOut * (100/360); // 100 degrees
-	static constexpr rot climb = (rot) armGearOut * (90/360); // 90 degrees
+	static constexpr rot home = (rot) armGearOut * (0/360); // 0°
+	static constexpr rot intake = (rot) armGearOut * (0/360); // 0°
+	static constexpr rot amp = (rot) armGearOut * (100/360); // 100°
+	static constexpr rot climb = (rot) armGearOut * (90/360); // 90°
 }
 
 //DEBUG_MSG("Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut << " degrees");
@@ -77,10 +77,10 @@ namespace arm {
 
 namespace wrist {
 	static constexpr double wristGearOut = 125.0 * 15/10; // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), belt drive ratio is 1:1
-	static constexpr rot home = (rot) wristGearOut * (150/360); // 150 degrees
-	static constexpr rot intake = (rot) wristGearOut * (0/360); // 0 degrees
-	static constexpr rot amp = (rot) wristGearOut * (35/360); // 35 degrees
-	static constexpr rot climb = (rot) wristGearOut * (150/360); // 150 degrees
+	static constexpr rot home = (rot) wristGearOut * (150/360); // 150°
+	static constexpr rot intake = (rot) wristGearOut * (0/360); // 0°
+	static constexpr rot amp = (rot) wristGearOut * (35/360); // 35°
+	static constexpr rot climb = (rot) wristGearOut * (150/360); // 150°
 }
 
 /**

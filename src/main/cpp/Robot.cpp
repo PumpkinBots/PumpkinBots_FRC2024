@@ -69,34 +69,34 @@ void Robot::RobotInit() {
    * FIXME: characterize this properly - this is copy-pasta crap
   */
   auto& armSlot0Conf = armConf.Slot0;
-  armSlot0Conf.kS = 0.05; // Add 0.25 V output to overcome static friction
+  armSlot0Conf.kS = 0.25; // Add 0.25 V output to overcome static friction
   armSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
-  armSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  armSlot0Conf.kP = 0.001; // A position error of 2.5 rotations results in 12 V output
+  armSlot0Conf.kA = 0.1; // An acceleration of 1 rps/s requires 0.01 V output
+  armSlot0Conf.kP = 60; // A position error of 2.5 rotations results in 12 V output
   armSlot0Conf.kI = 0; // no output for integrated error
-  armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
+  armSlot0Conf.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmArmConf = armConf.MotionMagic;
-  mmArmConf.MotionMagicCruiseVelocity = 20;
-  mmArmConf.MotionMagicAcceleration = 20;
-  mmArmConf.MotionMagicJerk = 200;
+  mmArmConf.MotionMagicCruiseVelocity = 5;
+  mmArmConf.MotionMagicAcceleration = 10;
+  mmArmConf.MotionMagicJerk = 50;
   arm.GetConfigurator().Apply(armConf);
   armFollower.GetConfigurator().Apply(armConf);
 
   armFollower.SetControl(phx::controls::Follower{arm.GetDeviceID(), true}); // inverted rotation
 
   auto& wristSlot0Conf = wristConf.Slot0;
-  wristSlot0Conf.kS = 0.05; // Add 0.25 V output to overcome static friction
+  wristSlot0Conf.kS = 0.25; // Add 0.25 V output to overcome static friction
   wristSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
-  wristSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  wristSlot0Conf.kP = 0.001; // A position error of 2.5 rotations results in 12 V output
+  wristSlot0Conf.kA = 0.1; // An acceleration of 1 rps/s requires 0.01 V output
+  wristSlot0Conf.kP = 60; // A position error of 2.5 rotations results in 12 V output
   wristSlot0Conf.kI = 0; // no output for integrated error
-  wristSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
+  wristSlot0Conf.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmWristConf = wristConf.MotionMagic;
-  mmWristConf.MotionMagicCruiseVelocity = 20;
-  mmWristConf.MotionMagicAcceleration = 20;
-  mmWristConf.MotionMagicJerk = 200;
+  mmWristConf.MotionMagicCruiseVelocity = 5;
+  mmWristConf.MotionMagicAcceleration = 10;
+  mmWristConf.MotionMagicJerk = 50;
   wrist.GetConfigurator().Apply(wristConf);
 
   /* assume start in home position */

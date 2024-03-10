@@ -41,7 +41,7 @@
 //local
 #include <Constants.h>
 
-#define DEBUG_ROBOT 1
+//#define DEBUG_ROBOT 1
 #ifdef DEBUG_ROBOT
 #define DEBUG_MSG(str) do { std::cout << str << std::endl; } while (false)
 #else

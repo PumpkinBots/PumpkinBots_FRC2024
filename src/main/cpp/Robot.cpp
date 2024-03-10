@@ -20,9 +20,9 @@ namespace phx = ctre::phoenix6;
 void Robot::RobotInit() {
 
   frc::SmartDashboard::PutNumber("Auto mode", 0);
-#ifdef ROBOT_CAMERA
+//#ifdef ROBOT_CAMERA
   frc::CameraServer::StartAutomaticCapture();
-#endif
+//#endif
 
   /**
    * DRIVE MOTOR CONFIGURATION
@@ -98,8 +98,8 @@ void Robot::RobotInit() {
   wristSlot0Conf.kD = 0.0; // A velocity error of 1 rps results in 0.1 V output
 
   auto& mmWristConf = wristConf.MotionMagic;
-  mmWristConf.MotionMagicCruiseVelocity = 1.0;
-  mmWristConf.MotionMagicAcceleration = 1.0;
+  mmWristConf.MotionMagicCruiseVelocity = 10.0;
+  mmWristConf.MotionMagicAcceleration = 10.0;
   mmWristConf.MotionMagicJerk = 50;
   wrist.GetConfigurator().Apply(wristConf);
 
@@ -231,7 +231,7 @@ void Robot::TeleopPeriodic() {
   }
 
   const double wristMin = 0.0 + m_wristStartPos;
-  const double wristMax = 40.0 + m_wristStartPos;
+  const double wristMax = 75.0 + m_wristStartPos;
   const double wristStep = 1.0;
   // Wrist Control - Left Bumper is down, Right Bumper is up, else stop
   if ((xbox.GetLeftBumper()) && (wristPosition > wristMin)) {

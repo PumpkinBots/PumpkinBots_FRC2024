@@ -72,7 +72,7 @@ void Robot::RobotInit() {
   armSlot0Conf.kS = 0.25; // Add 0.25 V output to overcome static friction
   armSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   armSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  armSlot0Conf.kP = 0; // A position error of 2.5 rotations results in 12 V output
+  armSlot0Conf.kP = 0.1; // A position error of 2.5 rotations results in 12 V output
   armSlot0Conf.kI = 0; // no output for integrated error
   armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
 

@@ -59,7 +59,7 @@ namespace intake {
  * at full speed, a Kraken is 6K rpm <- only used for estimating time to reach position
 */
 namespace arm {
-	static constexpr double gearOut = (5*4*3) * (52/15); // gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
+	static constexpr double gearOut = 1.0;//(5*4*3) * (52/15); // gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
 	static constexpr rot home = (rot) gearOut * (0/360); // 0°
 	static constexpr rot intake = (rot) gearOut * (0/360); // 0°
 	static constexpr rot amp = (rot) gearOut * (100/360); // 100°

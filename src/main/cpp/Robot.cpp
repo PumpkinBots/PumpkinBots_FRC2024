@@ -76,12 +76,12 @@ void Robot::RobotInit() {
   armSlot0Conf.kI = 0; // no output for integrated error
   armSlot0Conf.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
 
-  auto& mmArmConf = armConf.MotionMagic;
-  mmArmConf.MotionMagicCruiseVelocity = 0;
+  //auto& mmArmConf = armConf.MotionMagic;
+  //mmArmConf.MotionMagicCruiseVelocity = 0;
   //mmArmConf.MotionMagicAcceleration = 160;
   //mmArmConf.MotionMagicJerk = 1600;
-  mmArmConf.MotionMagicExpo_kV = 0.12;
-  mmArmConf.MotionMagicExpo_kA = 0.1;
+  //mmArmConf.MotionMagicExpo_kV = 0.12;
+  //mmArmConf.MotionMagicExpo_kA = 0.1;
   arm.GetConfigurator().Apply(armConf);
   armFollower.GetConfigurator().Apply(armConf);
 
@@ -148,7 +148,7 @@ void Robot::TeleopPeriodic() {
   */
   if (joystick.GetRawButtonPressed(3)) {
     slowDrive = !slowDrive;
-    std::cout << "limited maxSpeed: " << slowDrive;
+    DEBUG_MSG("limited maxSpeed: " << slowDrive);
   }
   const double maxSpeed = slowDrive ? 0.3 : 1.0;
 
@@ -274,13 +274,13 @@ void Robot::TeleopPeriodic() {
 
       case Mech::Home :
         intake.SetControl(intakeOut);
-        arm.SetControl(mmArm.WithPosition(arm::home));//.WithSlot(0));
-        wrist.SetControl(mmWrist.WithPosition(wrist::home));//.WithSlot(0));
+        arm.SetControl(mmArm.WithPosition(arm::home).WithSlot(0));
+        wrist.SetControl(mmWrist.WithPosition(wrist::home).WithSlot(0));
         break;
 
       case Mech::Intake :
-        arm.SetControl(mmArm.WithPosition(arm::intake));//.WithSlot(0));
-        wrist.SetControl(mmWrist.WithPosition(wrist::intake));//.WithSlot(0));
+        arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
+        wrist.SetControl(mmWrist.WithPosition(wrist::intake).WithSlot(0));
         if (!noteDetected && !armMoving && !wristMoving) {
           intake.SetControl(intakeOut);
         }
@@ -292,13 +292,13 @@ void Robot::TeleopPeriodic() {
         break;
 
       case Mech::Delivery :
-        arm.SetControl(mmArm.WithPosition(arm::amp));//.WithSlot(0));
-        wrist.SetControl(mmWrist.WithPosition(wrist::amp));//.WithSlot(0));
+        arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
+        wrist.SetControl(mmWrist.WithPosition(wrist::amp).WithSlot(0));
         break;
 
       case Mech::AmpScore :
-        arm.SetControl(mmArm.WithPosition(arm::amp));//.WithSlot(0));
-        wrist.SetControl(mmWrist.WithPosition(wrist::amp));//.WithSlot(0));
+        arm.SetControl(mmArm.WithPosition(arm::amp).WithSlot(0));
+        wrist.SetControl(mmWrist.WithPosition(wrist::amp).WithSlot(0));
         if (!armMoving && !wristMoving) {
           intake.SetControl(intakeOut);
           mechMode = Mech::Home; // reset to home
@@ -306,8 +306,8 @@ void Robot::TeleopPeriodic() {
         break;
 
       case Mech::Release :
-        arm.SetControl(mmArm.WithPosition(arm::intake));//.WithSlot(0));
-        wrist.SetControl(mmWrist.WithPosition(wrist::intake));//.WithSlot(0));
+        arm.SetControl(mmArm.WithPosition(arm::intake).WithSlot(0));
+        wrist.SetControl(mmWrist.WithPosition(wrist::intake).WithSlot(0));
         if (!armMoving && !wristMoving) {
           intake.SetInverted(!intake.GetInverted()); // reverse intake motors
           intake.SetControl(intakeOut);

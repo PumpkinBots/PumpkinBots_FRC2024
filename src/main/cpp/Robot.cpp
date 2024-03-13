@@ -72,18 +72,12 @@ void Robot::RobotInit() {
   armSlot0Conf.kS = 0.25; // Add 0.25 V output to overcome static friction
   armSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   armSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  armSlot0Conf.kP = 0.1; // A position error of 2.5 rotations results in 12 V output
+  armSlot0Conf.kP = 4.8; // A position error of 2.5 rotations results in 12 V output
   armSlot0Conf.kI = 0; // no output for integrated error
-  armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
+  armSlot0Conf.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
+  pdcArm.Slot = 0;
 
-  //auto& mmArmConf = armConf.MotionMagic;
-  //mmArmConf.MotionMagicCruiseVelocity = 0;
-  //mmArmConf.MotionMagicAcceleration = 160;
-  //mmArmConf.MotionMagicJerk = 1600;
-  //mmArmConf.MotionMagicExpo_kV = 0.12;
-  //mmArmConf.MotionMagicExpo_kA = 0.1;
   arm.GetConfigurator().Apply(armConf);
-  mmArm.Slot = 0;
   armFollower.GetConfigurator().Apply(armConf);
 
   armFollower.SetControl(phx::controls::Follower{arm.GetDeviceID(), true}); // inverted rotation
@@ -95,13 +89,8 @@ void Robot::RobotInit() {
   wristSlot0Conf.kP = 4.8; // A position error of 2.5 rotations results in 12 V output
   wristSlot0Conf.kI = 0; // no output for integrated error
   wristSlot0Conf.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
+  pdcArm.Slot = 0;
 
-  auto& mmWristConf = wristConf.MotionMagic;
-  mmWristConf.MotionMagicCruiseVelocity = 0;
-  //mmWristConf.MotionMagicAcceleration = 160;
-  //mmWristConf.MotionMagicJerk = 1600;
-  mmWristConf.MotionMagicExpo_kV = 0.12;
-  mmWristConf.MotionMagicExpo_kA = 0.1;
   wrist.GetConfigurator().Apply(wristConf);
 
   /* assume start in home position */
@@ -275,13 +264,13 @@ void Robot::TeleopPeriodic() {
 
       case Mech::Home :
         intake.SetControl(intakeOut);
-        arm.SetControl(mmArm.WithPosition(arm::home));
-        wrist.SetControl(mmWrist.WithPosition(wrist::home));
+        arm.SetControl(pdcArm.WithPosition(arm::home));
+        wrist.SetControl(pdcWrist.WithPosition(wrist::home));
         break;
 
       case Mech::Intake :
-        arm.SetControl(mmArm.WithPosition(arm::intake));
-        wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+        arm.SetControl(pdcArm.WithPosition(arm::intake));
+        wrist.SetControl(pdcWrist.WithPosition(wrist::intake));
         if (!noteDetected && !armMoving && !wristMoving) {
           intake.SetControl(intakeOut);
         }
@@ -293,13 +282,13 @@ void Robot::TeleopPeriodic() {
         break;
 
       case Mech::Delivery :
-        arm.SetControl(mmArm.WithPosition(arm::amp));
-        wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+        arm.SetControl(pdcArm.WithPosition(arm::amp));
+        wrist.SetControl(pdcWrist.WithPosition(wrist::amp));
         break;
 
       case Mech::AmpScore :
-        arm.SetControl(mmArm.WithPosition(arm::amp));
-        wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+        arm.SetControl(pdcArm.WithPosition(arm::amp));
+        wrist.SetControl(pdcWrist.WithPosition(wrist::amp));
         if (!armMoving && !wristMoving) {
           intake.SetControl(intakeOut);
           mechMode = Mech::Home; // reset to home
@@ -307,8 +296,8 @@ void Robot::TeleopPeriodic() {
         break;
 
       case Mech::Release :
-        arm.SetControl(mmArm.WithPosition(arm::intake));
-        wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+        arm.SetControl(pdcArm.WithPosition(arm::intake));
+        wrist.SetControl(pdcWrist.WithPosition(wrist::intake));
         if (!armMoving && !wristMoving) {
           intake.SetInverted(!intake.GetInverted()); // reverse intake motors
           intake.SetControl(intakeOut);
@@ -318,8 +307,8 @@ void Robot::TeleopPeriodic() {
         break;
 
       case Mech::Climb :
-        arm.SetControl(mmArm.WithPosition(arm::climb));
-        wrist.SetControl(mmWrist.WithPosition(wrist::climb));
+        arm.SetControl(pdcArm.WithPosition(arm::climb));
+        wrist.SetControl(pdcWrist.WithPosition(wrist::climb));
         break;
     }
   }

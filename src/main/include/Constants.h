@@ -57,17 +57,17 @@ namespace intake {
  * at full speed, a Kraken is 6K rpm <- only used for estimating time to reach position
 */
 namespace arm {
-	static constexpr double gearOut = 5 * 4 * 3 * 52 / 15.0;// gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
-	static constexpr units::angle::turn_t home{((gearOut * (0.0/360)))}; // 0°
-	static constexpr units::angle::turn_t intake{((gearOut * (0.0/360)))}; // 0°
-	static constexpr units::angle::turn_t amp{((gearOut * (100.0/360)))}; // 100°
-	static constexpr units::angle::turn_t climb{((gearOut * (90.0/360)))};
+	static constexpr double gearOut = 5*4*3 * 52/15;// gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
+	static constexpr units::angle::turn_t home{((gearOut * 0/360))}; // 0°
+	static constexpr units::angle::turn_t intake{((gearOut * 0/360))}; // 0°
+	static constexpr units::angle::turn_t amp{((gearOut * 100/360))}; // 100°
+	static constexpr units::angle::turn_t climb{((gearOut * 90/360))};
 }
 
 namespace wrist {
-	static constexpr double gearOut = 5 * 5 * 5 * 15 / 10.0; // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), chain drive ratio is 15:10
-	static constexpr units::angle::turn_t home{((gearOut * (0.0/360)))}; // 0°
-	static constexpr units::angle::turn_t intake{((gearOut * (0.0/360)))}; // 0°
-	static constexpr units::angle::turn_t amp{((gearOut * (35.0/360)))}; // 35°
-	static constexpr units::angle::turn_t climb{((gearOut * (150.0/360)))}; // 150°
+	static constexpr double gearOut = 5*5*5 * 15/10; // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), chain drive ratio is 15:10
+	static constexpr units::angle::turn_t home{((gearOut * 150/360))}; // 0°
+	static constexpr units::angle::turn_t intake{((gearOut * 0/360))}; // 0°
+	static constexpr units::angle::turn_t amp{((gearOut * 35/360))}; // 35°
+	static constexpr units::angle::turn_t climb{((gearOut * 150/360))}; // 150°
 }

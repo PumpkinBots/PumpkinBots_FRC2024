@@ -72,7 +72,7 @@ void Robot::RobotInit() {
   armSlot0Conf.kS = 0.25; // Add 0.25 V output to overcome static friction
   armSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   armSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  armSlot0Conf.kP = 4.8; // A position error of 2.5 rotations results in 12 V output
+  armSlot0Conf.kP = 1.0; // A position error of 2.5 rotations results in 12 V output
   armSlot0Conf.kI = 0; // no output for integrated error
   armSlot0Conf.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
   pdcArm.Slot = 0;
@@ -96,9 +96,6 @@ void Robot::RobotInit() {
   /* assume start in home position */
   arm.SetPosition(arm::home);
   wrist.SetPosition(wrist::home);
-
-  DEBUG_MSG("armGearOut = " << arm::gearOut);
-  DEBUG_MSG("wristGearOut = " << wrist::gearOut);
 
   /* Intake configuration */
   phx::configs::TalonFXConfiguration intakeConf{};
@@ -235,8 +232,8 @@ void Robot::TeleopPeriodic() {
   // wrist.SetPosition(wrist::home);
 
   // print out angular position of both arm and wrist
-  DEBUG_MSG("Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut << "°");
-  DEBUG_MSG("Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::gearOut << "°");
+  //DEBUG_MSG("Arm position: " << 360 * arm.GetPosition().GetValueAsDouble() / arm::gearOut.value() << "°");
+  //DEBUG_MSG("Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::gearOut.value() << "°");
 
   armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;

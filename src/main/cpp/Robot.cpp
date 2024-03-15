@@ -58,10 +58,10 @@ void Robot::RobotInit() {
   wristConf.MotorOutput.Inverted = false; // verified
 
   // limit dutycycles during calibration
-  //armConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
-  //armConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
-  //wristConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
-  //wristConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
+  armConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
+  armConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
+  wristConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
+  wristConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
 
 
   /**
@@ -74,7 +74,7 @@ void Robot::RobotInit() {
   armSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
   armSlot0Conf.kP = 1.0; // A position error of 2.5 rotations results in 12 V output
   armSlot0Conf.kI = 0; // no output for integrated error
-  armSlot0Conf.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
+  armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
   mmArm.Slot = 0;
   //pdcArm.Slot = 0;
   phx::configs::MotionMagicConfigs &mmArmConf = armConf.MotionMagic;
@@ -91,9 +91,9 @@ void Robot::RobotInit() {
   wristSlot0Conf.kS = 0.25; // Add 0.25 V output to overcome static friction
   wristSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   wristSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  wristSlot0Conf.kP = 4.8; // A position error of 2.5 rotations results in 12 V output
+  wristSlot0Conf.kP = 1.0; // A position error of 2.5 rotations results in 12 V output
   wristSlot0Conf.kI = 0; // no output for integrated error
-  wristSlot0Conf.kD = 0.1; // A velocity error of 1 rps results in 0.1 V output
+  wristSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
   mmWrist.Slot = 0;
   //pdcWrist.Slot = 0;
   phx::configs::MotionMagicConfigs &mmWristConf = armConf.MotionMagic;

@@ -74,10 +74,10 @@ class Robot : public frc::TimedRobot {
     phx::hardware::TalonFX armFollower{can::armFollower, CAN};
     phx::hardware::TalonFX wrist{can::wrist, CAN};
 
-    //phx::controls::MotionMagicExpoDutyCycle mmArm{arm::home};
-    //phx::controls::MotionMagicExpoDutyCycle mmWrist{wrist::home};
-    phx::controls::PositionDutyCycle pdcArm{arm::home};
-    phx::controls::PositionDutyCycle pdcWrist{wrist::home};
+    phx::controls::MotionMagicExpoDutyCycle mmArm{arm::home};
+    phx::controls::MotionMagicExpoDutyCycle mmWrist{wrist::home};
+    //phx::controls::PositionDutyCycle pdcArm{arm::home};
+    //phx::controls::PositionDutyCycle pdcWrist{wrist::home};
 
     phx::controls::DutyCycleOut armOut{0};
     phx::controls::DutyCycleOut wristOut{0};

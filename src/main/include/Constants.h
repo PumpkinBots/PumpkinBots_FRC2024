@@ -30,6 +30,9 @@
 
 #include <units/angle.h>
 
+using rot = units::angle::turn_t;
+using deg = units::angle::degree_t;
+
 namespace can {
 	static constexpr int leftDrive = 0;
 	static constexpr int leftFollower = 1;
@@ -58,10 +61,12 @@ namespace intake {
 */
 namespace arm {
 	static constexpr double gearOut = 5*4*3 * 52/15;// gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
+	static constexpr units::angle::degree_t homeDeg{0};
 	static constexpr units::angle::turn_t home{((gearOut * 0/360))}; // 0°
 	static constexpr units::angle::turn_t intake{((gearOut * 0/360))}; // 0°
 	static constexpr units::angle::turn_t amp{((gearOut * 100/360))}; // 100°
-	static constexpr units::angle::turn_t climb{((gearOut * 90/360))};
+	//static constexpr units::angle::turn_t climb{((gearOut * 90/360))}; // 90°
+	static constexpr rot climb{((gearOut * deg{90}))}; // 90°
 }
 
 namespace wrist {

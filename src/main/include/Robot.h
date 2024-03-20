@@ -41,7 +41,7 @@
 //local
 #include <Constants.h>
 
-#define DEBUG_ROBOT 1
+//#define DEBUG_ROBOT 1
 #ifdef DEBUG_ROBOT
 #define DEBUG_MSG(str) do { std::cout << str << std::endl; } while (false)
 #else
@@ -66,6 +66,8 @@ class Robot : public frc::TimedRobot {
     phx::controls::DutyCycleOut leftOut{0}; // Initialize output to 0%
     phx::controls::DutyCycleOut rightOut{0}; // Initialize output to 0%
 
+    int driveDirection = 1; // forward
+
     /**
      * CONFIGURE ARM/WRIST MOTORS
     */
@@ -76,8 +78,6 @@ class Robot : public frc::TimedRobot {
 
     phx::controls::MotionMagicExpoDutyCycle mmArm{arm::home};
     phx::controls::MotionMagicExpoDutyCycle mmWrist{wrist::home};
-    //phx::controls::PositionDutyCycle pdcArm{arm::home};
-    //phx::controls::PositionDutyCycle pdcWrist{wrist::home};
 
     phx::controls::DutyCycleOut armOut{0};
     phx::controls::DutyCycleOut wristOut{0};
@@ -87,9 +87,9 @@ class Robot : public frc::TimedRobot {
     bool armMoving = false;
     bool wristMoving = false;
 
-    bool slowArm = true;
-    double armSpeed = 0.0;
-    double wristSpeed = 0.0;
+    //bool slowArm = true;
+    //double armSpeed = 0.0;
+    //double wristSpeed = 0.0;
 
     /**
      * CONFIGURE INTAKE MOTORS
@@ -106,17 +106,13 @@ class Robot : public frc::TimedRobot {
 
     /**
      * CONTROL INTERFACE
-     * joystick and xbox USB port connection (assigned in driver station)
-     * Make sure these are correctly assigned in the driver station, if they aren't the robot can't read any inputs
     */
-    frc::Joystick joystick{0};
-    frc::XboxController xbox{1};
+    frc::Joystick driveController{ctl::joystick};
+    frc::XboxController mechController{ctl::xbox};
 
     // Slow drive starts as false, it is enabled by pressing button 3
     bool slowDrive = false;
-
-    // Reverse drive direction support
-    bool reverseDrive = false;
+    double maxSpeed;
 
     //Set up slew rate limiter
     /* FIXME - what goes here? */

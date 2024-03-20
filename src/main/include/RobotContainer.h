@@ -18,10 +18,6 @@
  * commands, and trigger mappings) should be declared here.
  */
 
-/**
- * NONE OF THIS IS EVER USED...
-*/
-
 class RobotContainer {
  public:
   RobotContainer();
@@ -30,8 +26,8 @@ class RobotContainer {
 
  private:
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  frc2::CommandXboxController driverController{
-      OperatorConstants::driverControllerPort};
+  //frc2::CommandXboxController driverController{
+  //    OperatorConstants::driverControllerPort};
 
   // The robot's subsystems are defined here...
   //GrabberSubsystem m_subsystem;

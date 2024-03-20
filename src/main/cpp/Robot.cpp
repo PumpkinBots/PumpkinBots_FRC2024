@@ -58,46 +58,44 @@ void Robot::RobotInit() {
   wristConf.MotorOutput.Inverted = false; // verified
 
   // limit dutycycles during calibration
-  armConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
-  armConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
-  wristConf.MotorOutput.PeakForwardDutyCycle = 0.1;  // Peak output of 10%
-  wristConf.MotorOutput.PeakReverseDutyCycle = -0.1; // Peak output of 10%
+  armConf.MotorOutput.PeakForwardDutyCycle = 0.75;  // Peak output of 10%
+  armConf.MotorOutput.PeakReverseDutyCycle = -0.75; // Peak output of 10%
+  wristConf.MotorOutput.PeakForwardDutyCycle = 0.75;  // Peak output of 10%
+  wristConf.MotorOutput.PeakReverseDutyCycle = -0.75; // Peak output of 10%
 
 
   /**
    * slot0 defines the PID characteristics of MotionMagic
-   * FIXME: characterize this properly - this is copy-pasta crap
   */
   auto& armSlot0Conf = armConf.Slot0;
   armSlot0Conf.kS = 0.25; // Add 0.25 V output to overcome static friction
   armSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   armSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  armSlot0Conf.kP = 1.0; // A position error of 2.5 rotations results in 12 V output
-  armSlot0Conf.kI = 0; // no output for integrated error
-  armSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
+  armSlot0Conf.kP = 1.0;
+  armSlot0Conf.kI = 0;
+  armSlot0Conf.kD = 0;
   mmArm.Slot = 0;
-  //pdcArm.Slot = 0;
+
   phx::configs::MotionMagicConfigs &mmArmConf = armConf.MotionMagic;
-  mmArmConf.MotionMagicCruiseVelocity = 0;
+  mmArmConf.MotionMagicCruiseVelocity = 0; // max cruise velocity
   mmArmConf.MotionMagicExpo_kA = 0.01;
   mmArmConf.MotionMagicExpo_kV = 0.12;
 
   arm.GetConfigurator().Apply(armConf);
   armFollower.GetConfigurator().Apply(armConf);
-
   armFollower.SetControl(phx::controls::Follower{arm.GetDeviceID(), true}); // inverted rotation
 
   auto& wristSlot0Conf = wristConf.Slot0;
   wristSlot0Conf.kS = 0.25; // Add 0.25 V output to overcome static friction
   wristSlot0Conf.kV = 0.12; // A velocity target of 1 rps results in 0.12 V output
   wristSlot0Conf.kA = 0.01; // An acceleration of 1 rps/s requires 0.01 V output
-  wristSlot0Conf.kP = 1.0; // A position error of 2.5 rotations results in 12 V output
-  wristSlot0Conf.kI = 0; // no output for integrated error
-  wristSlot0Conf.kD = 0; // A velocity error of 1 rps results in 0.1 V output
+  wristSlot0Conf.kP = 1.0; 
+  wristSlot0Conf.kI = 0;
+  wristSlot0Conf.kD = 0;
   mmWrist.Slot = 0;
-  //pdcWrist.Slot = 0;
-  phx::configs::MotionMagicConfigs &mmWristConf = armConf.MotionMagic;
-  mmWristConf.MotionMagicCruiseVelocity = 0;
+
+  phx::configs::MotionMagicConfigs &mmWristConf = wristConf.MotionMagic;
+  mmWristConf.MotionMagicCruiseVelocity = 0; // max cruise velocity
   mmWristConf.MotionMagicExpo_kA = 0.01;
   mmWristConf.MotionMagicExpo_kV = 0.12;
 
@@ -110,7 +108,7 @@ void Robot::RobotInit() {
   /* Intake configuration */
   phx::configs::TalonFXConfiguration intakeConf{};
   
-  /* Set rotation direction for the arm and wrist */
+  /* Set rotation direction for the intake */
   /**
    * FIXME: these are RANDOMLY chosen - review literature and cad to verify
   */
@@ -126,7 +124,7 @@ void Robot::RobotInit() {
   /* Set up followers to follow leaders and retain the leaders' inversion settings */
   intakeFollower.SetControl(phx::controls::Follower{intake.GetDeviceID(), false});
 
-  intakeOut.Output = intake::intakeOut;
+  intakeOut.Output = intake::intakePlace;
 }
 
 void Robot::DisabledPeriodic() {
@@ -143,28 +141,21 @@ void Robot::TeleopPeriodic() {
    * Button three on the joystick toggles slow drive mode which sets maxSpeed to 30% output
    * The robot's combined drive and turn speed are limited to the maxSpeed value.
   */
-  if (joystick.GetRawButtonPressed(3)) {
-    slowDrive = !slowDrive;
-    DEBUG_MSG("limited maxSpeed: " << slowDrive);
-  }
-  const double maxSpeed = slowDrive ? 0.3 : 1.0;
+  slowDrive = (driveController.GetRawButtonPressed(3)) ? !slowDrive : slowDrive;
+  maxSpeed = slowDrive ? 0.3 : 1.0;
 
   /**
-   * REVERSE DRIVE
+   * DRIVE DIRECTION
    * Button two on the joystick toggles the reverse drive mode
-   * FIXME: move this button to something more user friendly like the thumb button
   */
-  if (joystick.GetRawButtonPressed(2)) {
-    reverseDrive = !reverseDrive;
-    DEBUG_MSG("reverse drive: " << reverseDrive);
-  }
+  driveDirection = (driveController.GetRawButtonPressed(2)) ? -driveDirection : driveDirection; // thumb button
 
   /**
    * SPEED
    * jitter correction: throw out any inputs less than the deadband value
   */
   const double deadband = 0.05;
-  double speed = (fabs(joystick.GetY()) > deadband) ? joystick.GetY() : 0.0;
+  double speed = (fabs(driveController.GetY()) > deadband) ? driveDirection * driveController.GetY() : 0.0;
   
   /**
    * TURNING
@@ -175,8 +166,8 @@ void Robot::TeleopPeriodic() {
    * eg speed = 0 -> speedTurn = turn
    *    speed = 1 -> speedTurn = 0.5 * turn
   */
-  double turn = 0.5 * ((joystick.GetTwist()) * (fabs(joystick.GetTwist())));
-  double speedTurn = turn * (-((fabs(speed)) / 2) + 1);
+  double turn = (fabs(driveController.GetTwist()) > deadband) ? 0.5 * driveDirection * driveController.GetTwist() * fabs(driveController.GetTwist()) : 0.0;
+  double speedTurn = turn * (1 + fabs(speed)/2);
 
   /**
    * DRIVE OUTPUT (speed + speedTurn)
@@ -185,14 +176,6 @@ void Robot::TeleopPeriodic() {
    * or it might be better to leave as-is as it further limits turning at speed
    * FIXME: explore alternate implementations of turning + speed to make it as smooth and predictable as possible for the driver
   */
-
-  if (reverseDrive) {
-    leftDrive.SetInverted(!leftDrive.GetInverted());
-    rightDrive.SetInverted(!rightDrive.GetInverted());
-    leftOut.Output = - leftOut.Output;
-    rightOut.Output = - rightOut.Output;
-    speedTurn = - speedTurn;
-  }
 
   leftOut.Output = maxSpeed * (speed - speedTurn);
   rightOut.Output = maxSpeed * (speed + speedTurn); 
@@ -218,19 +201,19 @@ void Robot::TeleopPeriodic() {
   // refactor? https://docs.wpilib.org/en/stable/docs/software/commandbased/binding-commands-to-triggers.html
   // not a trivial refactor as states chain to each other (usually back to Mech::HOME)
 
-  if (xbox.GetAButton()) {
+  if (mechController.GetAButton()) {
     mechMode = Mech::Home;
-  } else if (xbox.GetBButton()) {
+  } else if (mechController.GetBButton()) {
     mechMode = Mech::Intake;
-  } else if (xbox.GetXButton()) {
+  } else if (mechController.GetXButton()) {
     mechMode = Mech::Release;
-  } else if (xbox.GetYButton()) {
+  } else if (mechController.GetYButton()) {
     mechMode = Mech::Climb;
-  } else if (xbox.GetLeftBumper()) {
+  } else if (mechController.GetLeftBumper()) {
     mechMode = Mech::Delivery;
-  } else if (xbox.GetRightBumper()) {
+  } else if (mechController.GetRightBumper()) {
     mechMode = Mech::AmpScore;
-  } else if (xbox.GetStartButton()) {
+  } else if (mechController.GetStartButton()) {
     mechMode = Mech::Manual;
   }
   
@@ -248,13 +231,14 @@ void Robot::TeleopPeriodic() {
   armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   noteDetected = noteSensor.Get();
-  const double maxArmSpeed = slowArm ? 0.1 : 1.0; // FIXME: there are currently no user inputs to change this
+  //const double maxArmSpeed = slowArm ? 0.1 : 1.0; // FIXME: there are currently no user inputs to change this
 
   if (!armMoving && !wristMoving) { // do nothing if the mechanism is still in motion
     switch (mechMode) {
+      /*
       case Mech::Manual :
-        armSpeed = (fabs(xbox.GetRightY()) > deadband) ? xbox.GetRightY() : 0.0;
-        wristSpeed = (fabs(xbox.GetLeftY()) > deadband) ? xbox.GetLeftY() : 0.0;
+        armSpeed = (fabs(mechController.GetRightY()) > deadband) ? mechController.GetRightY() : 0.0;
+        wristSpeed = (fabs(mechController.GetLeftY()) > deadband) ? mechController.GetLeftY() : 0.0;
         armOut.Output = maxArmSpeed * armSpeed;
         wristOut.Output = - maxArmSpeed * wristSpeed; // FIXME is the sign on this correct or should this be handled by 'inverted'
         arm.SetControl(armOut);
@@ -263,15 +247,16 @@ void Robot::TeleopPeriodic() {
         //DEBUG_MSG("Manual Mode: armOutput" << armOut.Output);
         //DEBUG_MSG("Manual Mode: wristOutput " << wristOut.Output);
 
-        if (xbox.GetBackButton()) {
+        if (mechController.GetBackButton()) {
           arm.SetPosition(arm::home);
           wrist.SetPosition(wrist::home);
         }
         break;
+      */
 
       case Mech::Home :
-        intake.SetControl(intakeOut);
-        arm.SetControl(mmArm.WithPosition(arm::home));
+        intake.SetControl(phx::controls::StaticBrake{});
+        arm.SetControl(mmArm.WithPosition(arm::home)); // untested ->.WithFeedForward(-0.2)); // should be dynamically calculated using arm angle
         wrist.SetControl(mmWrist.WithPosition(wrist::home));
         break;
 
@@ -289,13 +274,15 @@ void Robot::TeleopPeriodic() {
         break;
 
       case Mech::Delivery :
-        arm.SetControl(mmArm.WithPosition(arm::amp));
+        arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2).WithFeedForward(0.2)); // should be dynamically calculated using arm angle
         wrist.SetControl(mmWrist.WithPosition(wrist::amp));
         break;
 
       case Mech::AmpScore :
-        arm.SetControl(mmArm.WithPosition(arm::amp));
-        wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+        arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2).WithFeedForward(0.2)); // should be dynamically calculated using arm angle
+        if (!armMoving) {
+          wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+        }
         if (!armMoving && !wristMoving) {
           intake.SetControl(intakeOut);
           mechMode = Mech::Home; // reset to home

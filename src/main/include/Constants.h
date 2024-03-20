@@ -17,16 +17,11 @@
 /**
  * ctl : Control namespace (eg joystick, xbox)
  * can : CANBUS namespace (addresses)
- * drv : Drive namespace
- * arm : Functional namespace
- * wrist : Functional namespace
+ * drv : Drive namespace UNUSED
+ * arm : Mechanism namespace
+ * wrist : Mechanism namespace
+ * intake : 
 */
-
-//namespace OperatorConstants {
-
-//constexpr int driverControllerPort = 0;
-
-//}  // namespace OperatorConstants
 
 #include <units/angle.h>
 
@@ -48,31 +43,41 @@ namespace can {
 	static constexpr int intakeFollower = 12;
 }
 
+/**
+ * joystick and xbox USB port connection (assigned in driver station)
+ * Make sure these are correctly assigned in the driver station, if they aren't the robot can't read any inputs
+*/
+namespace ctl {
+	static constexpr int joystick = 0;
+	static constexpr int xbox = 1;
+}
+
 namespace dio {
 	static constexpr int noteSensor = 0;
 }
 
 namespace intake {
-	static constexpr double intakeOut = 0.2; // FIXME - this should be maximized for shooting
+	static constexpr double intakePlace = 0.2;
+	static constexpr double intakeShot = 1.0;
 }
 
 /**
+ * ARM and WRIST gearing and setpoint configuration
+ * phoenix6 API uses rotational units (units::angle::turn_t) natively
  * at full speed, a Kraken is 6K rpm <- only used for estimating time to reach position
 */
 namespace arm {
-	static constexpr double gearOut = 5*4*3 * 52/15;// gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
-	static constexpr units::angle::degree_t homeDeg{0};
-	static constexpr units::angle::turn_t home{((gearOut * 0/360))}; // 0°
-	static constexpr units::angle::turn_t intake{((gearOut * 0/360))}; // 0°
-	static constexpr units::angle::turn_t amp{((gearOut * 100/360))}; // 100°
-	//static constexpr units::angle::turn_t climb{((gearOut * 90/360))}; // 90°
-	static constexpr rot climb{((gearOut * deg{90}))}; // 90°
+	static constexpr double gearOut = 3*4*5 * 52/15;// gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
+	static constexpr rot home{gearOut * deg{0}}; // 0°
+	static constexpr rot intake{gearOut * deg{0}}; // 0°
+	static constexpr rot amp{gearOut * deg{100}}; // 100°
+	static constexpr rot climb{gearOut * deg{90}}; // 90°
 }
 
 namespace wrist {
 	static constexpr double gearOut = 5*5*5 * 15/10; // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), chain drive ratio is 15:10
-	static constexpr units::angle::turn_t home{((gearOut * 150/360))}; // 0°
-	static constexpr units::angle::turn_t intake{((gearOut * 0/360))}; // 0°
-	static constexpr units::angle::turn_t amp{((gearOut * 35/360))}; // 35°
-	static constexpr units::angle::turn_t climb{((gearOut * 150/360))}; // 150°
+	static constexpr rot home{gearOut * deg{150}}; // 0°
+	static constexpr rot intake{gearOut * deg{0}}; // 0°
+	static constexpr rot amp{gearOut * deg{35}}; // 35°
+	static constexpr rot climb{gearOut * deg{150}}; // 150°
 }

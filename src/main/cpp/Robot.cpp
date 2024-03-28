@@ -32,8 +32,8 @@ void Robot::RobotInit() {
   phx::configs::TalonFXConfiguration rightConf{};
 
   /* Controls which end of the robot is front - these should always be set in opposition */
-  leftConf.MotorOutput.Inverted = false;
-  rightConf.MotorOutput.Inverted = true;
+  leftConf.MotorOutput.Inverted = true;
+  rightConf.MotorOutput.Inverted = false;
 
   /* Apply configuration */
   leftDrive.GetConfigurator().Apply(leftConf);
@@ -58,10 +58,10 @@ void Robot::RobotInit() {
   wristConf.MotorOutput.Inverted = false; // verified
 
   // limit dutycycles during calibration
-  armConf.MotorOutput.PeakForwardDutyCycle = 0.75;  // Peak output of 10%
-  armConf.MotorOutput.PeakReverseDutyCycle = -0.75; // Peak output of 10%
-  wristConf.MotorOutput.PeakForwardDutyCycle = 0.75;  // Peak output of 10%
-  wristConf.MotorOutput.PeakReverseDutyCycle = -0.75; // Peak output of 10%
+  armConf.MotorOutput.PeakForwardDutyCycle = power::armPeak;  // Peak output of 10%
+  armConf.MotorOutput.PeakReverseDutyCycle = -power::armPeak; // Peak output of 10%
+  wristConf.MotorOutput.PeakForwardDutyCycle = power::wristPeak;  // Peak output of 10%
+  wristConf.MotorOutput.PeakReverseDutyCycle = -power::wristPeak; // Peak output of 10%
 
 
   /**
@@ -124,7 +124,7 @@ void Robot::RobotInit() {
   /* Set up followers to follow leaders and retain the leaders' inversion settings */
   intakeFollower.SetControl(phx::controls::Follower{intake.GetDeviceID(), false});
 
-  intakeOut.Output = intake::intakePlace;
+  intakeOut.Output = power::intakePlace;
 }
 
 void Robot::DisabledPeriodic() {
@@ -213,10 +213,11 @@ void Robot::TeleopPeriodic() {
     mechMode = Mech::Delivery;
   } else if (mechController.GetRightBumper()) {
     mechMode = Mech::AmpScore;
-  } else if (mechController.GetStartButton()) {
-    mechMode = Mech::Manual;
-  }
-  
+  } else if (mechController.GetLeftStickButton()) {
+    mechMode = Mech::ActivateClimbing;
+  }// else if (mechController.GetStartButton()) {
+   // mechMode = Mech::Manual;
+   //}
   // add support for manual mode 
   // xbox.GetRightTriggerAxis() is shoot
   // -xbox.GetLeftY() is wrist moving away from home (positive angle)
@@ -279,13 +280,13 @@ void Robot::TeleopPeriodic() {
         break;
 
       case Mech::AmpScore :
-        arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2).WithFeedForward(0.2)); // should be dynamically calculated using arm angle
+        //arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2).WithFeedForward(0.2)); // should be dynamically calculated using arm angle
         if (!armMoving) {
-          wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+          //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
         }
         if (!armMoving && !wristMoving) {
           intake.SetControl(intakeOut);
-          mechMode = Mech::Home; // reset to home
+          // mechMode = Mech::Home; // reset to home
         }
         break;
 
@@ -303,6 +304,15 @@ void Robot::TeleopPeriodic() {
       case Mech::Climb :
         arm.SetControl(mmArm.WithPosition(arm::climb));
         wrist.SetControl(mmWrist.WithPosition(wrist::climb));
+        break;
+
+      case Mech::ActivateClimbing :
+        //armConf.MotorOutput.PeakForwardDutyCycle = power::armClimb;  // Peak output of 10%
+        //armConf.MotorOutput.PeakReverseDutyCycle = -power::armClimb; // Peak output of 10%
+        arm.SetControl(mmArm.WithPosition(arm::climbDown));
+        wrist.SetControl(mmWrist.WithPosition(wrist::amp));
+        //armConf.MotorOutput.PeakForwardDutyCycle = power::armPeak;  // Peak output of 10%
+        //armConf.MotorOutput.PeakReverseDutyCycle = -power::armPeak;
         break;
     }
   }

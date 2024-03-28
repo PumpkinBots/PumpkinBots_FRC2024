@@ -56,9 +56,12 @@ namespace dio {
 	static constexpr int noteSensor = 0;
 }
 
-namespace intake {
+namespace power {
 	static constexpr double intakePlace = 0.2;
 	static constexpr double intakeShot = 1.0;
+	static constexpr double armClimb = 0.2;
+	static constexpr double armPeak = 0.75; //0.75 FIXME
+	static constexpr double wristPeak = 0.75;
 }
 
 /**
@@ -72,12 +75,13 @@ namespace arm {
 	static constexpr rot intake{gearOut * deg{0}}; // 0°
 	static constexpr rot amp{gearOut * deg{100}}; // 100°
 	static constexpr rot climb{gearOut * deg{90}}; // 90°
+	static constexpr rot climbDown{gearOut * deg{25}}; // 25°
 }
 
 namespace wrist {
 	static constexpr double gearOut = 5*5*5 * 15/10; // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), chain drive ratio is 15:10
-	static constexpr rot home{gearOut * deg{150}}; // 0°
+	static constexpr rot home{gearOut * deg{150}}; // 150°
 	static constexpr rot intake{gearOut * deg{0}}; // 0°
-	static constexpr rot amp{gearOut * deg{35}}; // 35°
+	static constexpr rot amp{gearOut * deg{25}}; // 25°
 	static constexpr rot climb{gearOut * deg{150}}; // 150°
 }

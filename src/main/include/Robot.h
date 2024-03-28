@@ -132,6 +132,8 @@ class Robot : public frc::TimedRobot {
 
     int m_printCount = 0;
 
+    units::time::second_t outputTimer = 0_s;
+
   public:
     Robot () {
       /* set up gyro */

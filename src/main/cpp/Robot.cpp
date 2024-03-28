@@ -295,10 +295,15 @@ void Robot::TeleopPeriodic() {
         arm.SetControl(mmArm.WithPosition(arm::intake));
         wrist.SetControl(mmWrist.WithPosition(wrist::intake));
         if (!armMoving && !wristMoving) {
-          intake.SetInverted(!intake.GetInverted()); // reverse intake motors
-          intake.SetControl(intakeRedo);
-          intake.SetInverted(!intake.GetInverted()); // revert to standard direction
-          mechMode = Mech::Home; // reset to home
+          if (outputTimer == 0_s) {
+            outputTimer = m_timer.Get();
+            intake.SetInverted(!intake.GetInverted()); // reverse intake motors
+            intake.SetControl(power::intakePlace);
+          } else if (outputTimer + 1_s <= m_timer.Get()) { // modify delay for sufficient "eject" time as necessary
+            outputTimer = 0_s;
+            intake.SetInverted(!intake.GetInverted()); // revert to standard direction
+            mechMode = Mech::Home; // reset to home
+          }
         }
         break;
 

@@ -99,7 +99,7 @@ class Robot : public frc::TimedRobot {
     phx::hardware::TalonFX intakeFollower{can::intakeFollower, CAN};
 
     phx::controls::DutyCycleOut intakeOut{0}; // Initialize output to 0%
-
+    phx::controls::DutyCycleOut intakeRedo{0};
     // intake sensor
     frc::DigitalInput noteSensor{dio::noteSensor};
     bool noteDetected = false; // if we have a note pre-loaded, beamBreak detection should set this to true

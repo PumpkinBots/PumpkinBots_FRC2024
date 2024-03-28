@@ -125,6 +125,7 @@ void Robot::RobotInit() {
   intakeFollower.SetControl(phx::controls::Follower{intake.GetDeviceID(), false});
 
   intakeOut.Output = power::intakePlace;
+  intakeRedo.Output = power::intakeReverse;
 }
 
 void Robot::DisabledPeriodic() {
@@ -295,7 +296,7 @@ void Robot::TeleopPeriodic() {
         wrist.SetControl(mmWrist.WithPosition(wrist::intake));
         if (!armMoving && !wristMoving) {
           intake.SetInverted(!intake.GetInverted()); // reverse intake motors
-          intake.SetControl(intakeOut);
+          intake.SetControl(intakeRedo);
           intake.SetInverted(!intake.GetInverted()); // revert to standard direction
           mechMode = Mech::Home; // reset to home
         }

@@ -99,6 +99,7 @@
     "cinttypes": "cpp",
     "typeindex": "cpp",
     "variant": "cpp",
-    "*.inc": "cpp"
+    "*.inc": "cpp",
+    "matrixfunctions": "cpp"
   }
 }

@@ -62,6 +62,7 @@ namespace power {
 	static constexpr double armClimb = 0.2;
 	static constexpr double armPeak = 0.75; //0.75 FIXME
 	static constexpr double wristPeak = 0.75;
+	static constexpr double intakeReverse = -0.2;
 }
 
 /**

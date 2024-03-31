@@ -63,6 +63,7 @@ namespace power {
 	static constexpr double armPeak = 0.75; //0.75 FIXME
 	static constexpr double wristPeak = 0.75;
 	static constexpr double intakeReverse = -0.2;
+	static constexpr double intakeShuttle = -3.0;
 }
 
 /**
@@ -83,6 +84,30 @@ namespace wrist {
 	static constexpr double gearOut = 5*5*5 * 15/10; // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), chain drive ratio is 15:10
 	static constexpr rot home{gearOut * deg{150}}; // 150°
 	static constexpr rot intake{gearOut * deg{0}}; // 0°
-	static constexpr rot amp{gearOut * deg{25}}; // 25°
+	static constexpr rot amp{gearOut * deg{30}}; // 25°
 	static constexpr rot climb{gearOut * deg{150}}; // 150°
+	static constexpr rot shuttle{gearOut * deg{90}};
 }
+
+const int autonomousMode = 0; // change for different autonomous mode;
+/*
+0 for exit / go forward
+start just before line
+
+1 for one note (preload)
+start in corner of amp line and start zone line
+
+2 for two note (preload + one from field on amp side)
+start in corner of amp line and start zone line
+
+3 for three note (preload + one from field on amp side and one in middle of row)
+start in corner of amp line and start zone line
+
+4 for four note (DO NOT USE unless we wanna show off)
+start in corner of amp line and start zone line
+
+5 for no movement
+start anywhere
+
+*/
+const int sideOfField = false; // true is blue; false is red.

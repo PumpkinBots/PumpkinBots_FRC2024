@@ -82,7 +82,7 @@ class Robot : public frc::TimedRobot {
     phx::controls::DutyCycleOut armOut{0};
     phx::controls::DutyCycleOut wristOut{0};
 
-    enum class Mech {Home, Intake, Delivery, AmpScore, Release, Climb, ActivateClimbing};
+    enum class Mech {Home, Intake, Delivery, AmpScore, Release, Climb, ActivateClimbing, Shuttle};
     Mech mechMode = Mech::Home;
     bool armMoving = false;
     bool wristMoving = false;
@@ -100,6 +100,7 @@ class Robot : public frc::TimedRobot {
 
     phx::controls::DutyCycleOut intakeOut{0}; // Initialize output to 0%
     phx::controls::DutyCycleOut intakeRedo{0};
+    phx::controls::DutyCycleOut intakeShuttleShoot{0};
     // intake sensor
     frc::DigitalInput noteSensor{dio::noteSensor};
     bool noteDetected = false; // if we have a note pre-loaded, beamBreak detection should set this to true

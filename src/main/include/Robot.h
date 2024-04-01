@@ -133,6 +133,8 @@ class Robot : public frc::TimedRobot {
 
     int m_printCount = 0;
 
+    units::time::second_t outputTimer = 0_s;
+
   public:
     Robot () {
       /* set up gyro */
@@ -159,4 +161,6 @@ class Robot : public frc::TimedRobot {
 
     //void SimulationInit() override;
     //void SimulationPeriodic() override;
+
+    void Mechanism();
 };

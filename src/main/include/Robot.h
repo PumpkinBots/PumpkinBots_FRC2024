@@ -134,6 +134,7 @@ class Robot : public frc::TimedRobot {
     int m_printCount = 0;
 
     units::time::second_t outputTimer = 0_s;
+    units::time::second_t disabledTimer = 500_s;
 
   public:
     Robot () {

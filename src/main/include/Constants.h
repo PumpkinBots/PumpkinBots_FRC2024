@@ -88,8 +88,8 @@ namespace wrist {
 	static constexpr rot climb{gearOut * deg{150}}; // 150°
 	static constexpr rot shuttle{gearOut * deg{90}};
 }
-
-const int autonomousMode = 0; // change for different autonomous mode;
+const bool sideOfField = false; // true is blue; false is red.
+const int autonomousMode = 2; // change for different autonomous mode;
 /*
 0 for exit / go forward
 start just before line
@@ -109,5 +109,6 @@ start in corner of amp line and start zone line
 5 for no movement
 start anywhere
 
+other = no movement
+
 */
-const int sideOfField = false; // true is blue; false is red.

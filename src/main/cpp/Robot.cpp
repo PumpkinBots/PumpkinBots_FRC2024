@@ -381,9 +381,9 @@ void Robot::Mechanism() {
       case Mech::Intake :
         arm.SetControl(mmArm.WithPosition(arm::intake));
         wrist.SetControl(mmWrist.WithPosition(wrist::intake));
-        if (!noteDetected && !armMoving && !wristMoving) {
-          intake.SetControl(intakeOut);
-        }
+//        if (!noteDetected && !armMoving && !wristMoving) {
+        intake.SetControl(intakeOut);
+//        }
         if (noteDetected) {
           if (!armMoving && !wristMoving) {
             mechMode = Mech::Home; // reset to home
@@ -765,8 +765,8 @@ void Robot::AutonomousPeriodic() {
         }
         if (m_timer.Get() >= 0.6_s && m_timer.Get() <= 1.75_s) {
           // turn left
-          leftSpeed = 0.1;
-          rightSpeed = -0.1;
+          leftSpeed = 0.2;
+          rightSpeed = -0.2;
         }
         if (m_timer.Get() >= 1.75_s && m_timer.Get() <= 2.5_s) {
           // drive towards amp

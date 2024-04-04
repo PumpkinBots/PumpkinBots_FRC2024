@@ -79,6 +79,9 @@ class Robot : public frc::TimedRobot {
     phx::controls::MotionMagicExpoDutyCycle mmArm{arm::home};
     phx::controls::MotionMagicExpoDutyCycle mmWrist{wrist::home};
 
+    phx::configs::TalonFXConfiguration armConf{};
+    phx::configs::TalonFXConfiguration armClimbConf{};
+
     phx::controls::DutyCycleOut armOut{0};
     phx::controls::DutyCycleOut wristOut{0};
 

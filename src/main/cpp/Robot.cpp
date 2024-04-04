@@ -50,7 +50,6 @@ void Robot::RobotInit() {
   */
 
   /* Mechanism configuration */
-  phx::configs::TalonFXConfiguration armConf{};
   phx::configs::TalonFXConfiguration wristConf{};
   
   /* Set rotation direction for the arm and wrist */
@@ -80,6 +79,9 @@ void Robot::RobotInit() {
   mmArmConf.MotionMagicCruiseVelocity = 0; // max cruise velocity
   mmArmConf.MotionMagicExpo_kA = 0.01;
   mmArmConf.MotionMagicExpo_kV = 0.12;
+
+  armClimbConf = armConf;
+  armClimbConf.MotionMagic.MotionMagicCruiseVelocity = 5;
 
   arm.GetConfigurator().Apply(armConf);
   armFollower.GetConfigurator().Apply(armConf);
@@ -247,101 +249,6 @@ void Robot::TeleopPeriodic() {
   //DEBUG_MSG("Wrist position: " << 360 * wrist.GetPosition().GetValueAsDouble() / wrist::gearOut.value() << "°");
 
   Mechanism();
-  /*
-  armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
-  wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
-  noteDetected = noteSensor.Get();
-  */
-  //const double maxArmSpeed = slowArm ? 0.1 : 1.0; // FIXME: there are currently no user inputs to change this
-  /*
-  if (!armMoving && !wristMoving) { // do nothing if the mechanism is still in motion
-    switch (mechMode) {
-      /*
-      case Mech::Manual :
-        armSpeed = (fabs(mechController.GetRightY()) > deadband) ? mechController.GetRightY() : 0.0;
-        wristSpeed = (fabs(mechController.GetLeftY()) > deadband) ? mechController.GetLeftY() : 0.0;
-        armOut.Output = maxArmSpeed * armSpeed;
-        wristOut.Output = - maxArmSpeed * wristSpeed; // FIXME is the sign on this correct or should this be handled by 'inverted'
-        arm.SetControl(armOut);
-        wrist.SetControl(wristOut);
-
-        //DEBUG_MSG("Manual Mode: armOutput" << armOut.Output);
-        //DEBUG_MSG("Manual Mode: wristOutput " << wristOut.Output);
-
-        if (mechController.GetBackButton()) {
-          arm.SetPosition(arm::home);
-          wrist.SetPosition(wrist::home);
-        }
-        break;
-      */
-/*
-      case Mech::Home :
-        intake.SetControl(phx::controls::StaticBrake{});
-        arm.SetControl(mmArm.WithPosition(arm::home)); // untested ->.WithFeedForward(-0.2)); // should be dynamically calculated using arm angle
-        wrist.SetControl(mmWrist.WithPosition(wrist::home));
-        break;
-
-      case Mech::Intake :
-        arm.SetControl(mmArm.WithPosition(arm::intake));
-        wrist.SetControl(mmWrist.WithPosition(wrist::intake));
-        if (!noteDetected && !armMoving && !wristMoving) {
-          intake.SetControl(intakeOut);
-        }
-        if (noteDetected) {
-          if (!armMoving && !wristMoving) {
-            mechMode = Mech::Home; // reset to home
-          }
-        }
-        break;
-
-      case Mech::Delivery :
-        arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2).WithFeedForward(0.2)); // should be dynamically calculated using arm angle
-        wrist.SetControl(mmWrist.WithPosition(wrist::amp));
-        break;
-
-      case Mech::AmpScore :
-        //arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2).WithFeedForward(0.2)); // should be dynamically calculated using arm angle
-        if (!armMoving) {
-          //wrist.SetControl(mmWrist.WithPosition(wrist::amp));
-        }
-        if (!armMoving && !wristMoving) {
-          intake.SetControl(intakeOut);
-          // mechMode = Mech::Home; // reset to home
-        }
-        break;
-
-      case Mech::Release :
-        arm.SetControl(mmArm.WithPosition(arm::intake));
-        wrist.SetControl(mmWrist.WithPosition(wrist::intake));
-        if (!armMoving && !wristMoving) {
-          if (outputTimer == 0_s) {
-            outputTimer = m_timer.Get();
-            intake.SetInverted(!intake.GetInverted()); // reverse intake motors
-            intake.SetControl(power::intakePlace);
-          } else if (outputTimer + 1_s <= m_timer.Get()) { // modify delay for sufficient "eject" time as necessary
-            outputTimer = 0_s;
-            intake.SetInverted(!intake.GetInverted()); // revert to standard direction
-            mechMode = Mech::Home; // reset to home
-          }
-        }
-        break;
-
-      case Mech::Climb :
-        arm.SetControl(mmArm.WithPosition(arm::climb));
-        wrist.SetControl(mmWrist.WithPosition(wrist::climb));
-        break;
-
-      case Mech::ActivateClimbing :
-        //armConf.MotorOutput.PeakForwardDutyCycle = power::armClimb;  // Peak output of 10%
-        //armConf.MotorOutput.PeakReverseDutyCycle = -power::armClimb; // Peak output of 10%
-        arm.SetControl(mmArm.WithPosition(arm::climbDown));
-        wrist.SetControl(mmWrist.WithPosition(wrist::amp));
-        //armConf.MotorOutput.PeakForwardDutyCycle = power::armPeak;  // Peak output of 10%
-        //armConf.MotorOutput.PeakReverseDutyCycle = -power::armPeak;
-        break;
-    }
-  }
-  */
 }
 
 
@@ -353,24 +260,6 @@ void Robot::Mechanism() {
 
   if (!armMoving && !wristMoving) { // do nothing if the mechanism is still in motion
     switch (mechMode) {
-      /*
-      case Mech::Manual :
-        armSpeed = (fabs(mechController.GetRightY()) > deadband) ? mechController.GetRightY() : 0.0;
-        wristSpeed = (fabs(mechController.GetLeftY()) > deadband) ? mechController.GetLeftY() : 0.0;
-        armOut.Output = maxArmSpeed * armSpeed;
-        wristOut.Output = - maxArmSpeed * wristSpeed; // FIXME is the sign on this correct or should this be handled by 'inverted'
-        arm.SetControl(armOut);
-        wrist.SetControl(wristOut);
-
-        //DEBUG_MSG("Manual Mode: armOutput" << armOut.Output);
-        //DEBUG_MSG("Manual Mode: wristOutput " << wristOut.Output);
-
-        if (mechController.GetBackButton()) {
-          arm.SetPosition(arm::home);
-          wrist.SetPosition(wrist::home);
-        }
-        break;
-      */
 
       case Mech::Home :
         intake.SetControl(phx::controls::StaticBrake{});
@@ -424,18 +313,17 @@ void Robot::Mechanism() {
         break;
 
       case Mech::Climb :
+        arm.GetConfigurator().Apply(armConf);
         arm.SetControl(mmArm.WithPosition(arm::climb));
         wrist.SetControl(mmWrist.WithPosition(wrist::climb));
         break;
 
       case Mech::ActivateClimbing :
-        //armConf.MotorOutput.PeakForwardDutyCycle = power::armClimb;  // Peak output of 10%
-        //armConf.MotorOutput.PeakReverseDutyCycle = -power::armClimb; // Peak output of 10%
+        arm.GetConfigurator().Apply(armClimbConf);
         arm.SetControl(mmArm.WithPosition(arm::climbDown));
         wrist.SetControl(mmWrist.WithPosition(wrist::amp));
-        //armConf.MotorOutput.PeakForwardDutyCycle = power::armPeak;  // Peak output of 10%
-        //armConf.MotorOutput.PeakReverseDutyCycle = -power::armPeak;
         break;
+
       case Mech::Shuttle :
         arm.SetControl(mmArm.WithPosition(arm::home));
         wrist.SetControl(mmWrist.WithPosition(wrist::shuttle));

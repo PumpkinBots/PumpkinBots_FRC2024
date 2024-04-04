@@ -72,7 +72,7 @@ namespace power {
  * at full speed, a Kraken is 6K rpm <- only used for estimating time to reach position
 */
 namespace arm {
-	static constexpr double gearOut = 3*4*5 * 52/15;// gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
+	static constexpr double gearOut = 4*5*5 * 52/15;// gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
 	static constexpr rot home{gearOut * deg{0}}; // 0°
 	static constexpr rot intake{gearOut * deg{0}}; // 0°
 	static constexpr rot amp{gearOut * deg{100}}; // 100°
@@ -81,7 +81,7 @@ namespace arm {
 }
 
 namespace wrist {
-	static constexpr double gearOut = 5*5*5 * 15/10; // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), chain drive ratio is 15:10
+	static constexpr double gearOut = 4*4*5 * 15/10; // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), chain drive ratio is 15:10
 	static constexpr rot home{gearOut * deg{150}}; // 150°
 	static constexpr rot intake{gearOut * deg{0}}; // 0°
 	static constexpr rot amp{gearOut * deg{30}}; // 25°

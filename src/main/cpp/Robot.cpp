@@ -303,7 +303,9 @@ void Robot::Mechanism() {
         arm.GetConfigurator().Apply(armConf);
         arm.SetControl(mmArm.WithPosition(arm::intake));
         wrist.SetControl(mmWrist.WithPosition(wrist::intake));
-        if (!armMoving && !wristMoving) {
+        intake.SetControl(intakeRedo);
+
+        /*if (!armMoving && !wristMoving) {
           if (outputTimer == 0_s) {
             outputTimer = m_timer.Get();
             intake.SetInverted(!intake.GetInverted()); // reverse intake motors
@@ -314,6 +316,7 @@ void Robot::Mechanism() {
             mechMode = Mech::Home; // reset to home
           }
         }
+        */
         break;
 
       case Mech::Climb :
@@ -443,24 +446,24 @@ void Robot::AutonomousPeriodic() {
           rightSpeed = -0.1;
           leftSpeed = -0.1;
         }
-        if (m_timer.Get() >= 0.6_s && m_timer.Get() <= 1.75_s) {
+        if (m_timer.Get() >= 0.6_s && m_timer.Get() <= 1.9_s) {
           // turn right
           leftSpeed = -0.1;
           rightSpeed = 0.1;
         }
-        if (m_timer.Get() >= 1.75_s && m_timer.Get() <= 2.5_s) {
+        if (m_timer.Get() >= 1.9_s && m_timer.Get() <= 3_s) {
           // drive towards amp
-          leftSpeed = -0.1;
-          rightSpeed = -0.1;
+          leftSpeed = -0.075;
+          rightSpeed = -0.075;
           // raise arm to scoring position
           arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2).WithFeedForward(0.2)); // should be dynamically calculated using arm angle
           wrist.SetControl(mmWrist.WithPosition(wrist::amp));
         }
-        if (m_timer.Get() >= 2.6_s && m_timer.Get() <= 3.0_s) {
+        if (m_timer.Get() >= 3_s && m_timer.Get() <= 3.5_s) {
           // spin intake to score
           intake.SetControl(intakeOut);
         }
-        if (m_timer.Get() >= 3.0_s && m_timer.Get() <= 5.5_s) {
+        if (m_timer.Get() >= 3.5_s && m_timer.Get() <= 6_s) {
           // stop intake after scored
           intake.SetControl(phx::controls::StaticBrake{});
           // lower arm and wrist to home position
@@ -474,12 +477,12 @@ void Robot::AutonomousPeriodic() {
           rightSpeed = -0.1;
           leftSpeed = -0.1;
         }
-        if (m_timer.Get() >= 0.6_s && m_timer.Get() <= 1.75_s) {
+        if (m_timer.Get() >= 0.6_s && m_timer.Get() <= 1.9_s) {
           // turn right
           leftSpeed = -0.1;
           rightSpeed = 0.1;
         }
-        if (m_timer.Get() >= 1.75_s && m_timer.Get() <= 2.5_s) {
+        if (m_timer.Get() >= 1.9_s && m_timer.Get() <= 3_s) {
           // drive towards amp
           leftSpeed = -0.1;
           rightSpeed = -0.1;
@@ -487,53 +490,53 @@ void Robot::AutonomousPeriodic() {
           arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2).WithFeedForward(0.2)); // should be dynamically calculated using arm angle
           wrist.SetControl(mmWrist.WithPosition(wrist::amp));
         }
-        if (m_timer.Get() >= 2.6_s && m_timer.Get() <= 3.0_s) {
+        if (m_timer.Get() >= 3_s && m_timer.Get() <= 3.5_s) {
           // spin intake to score
           intake.SetControl(intakeOut);
         }
-        if (m_timer.Get() >= 3.0_s && m_timer.Get() <= 3.5_s) {
+        if (m_timer.Get() >= 3.5_s && m_timer.Get() <= 4_s) {
           // stop intake after scored
           intake.SetControl(phx::controls::StaticBrake{});
           // lower arm and wrist to intake position
           arm.SetControl(mmArm.WithPosition(arm::intake));
           wrist.SetControl(mmWrist.WithPosition(wrist::intake));
           // drive towards second note
-          leftSpeed = 0.3;
-          rightSpeed = 0.3;
+          leftSpeed = 0.28;
+          rightSpeed = 0.28;
         }
-        if (m_timer.Get() >= 3.5_s && m_timer.Get() <= 4.25_s) {
+        if (m_timer.Get() >= 4_s && m_timer.Get() <= 4.75_s) {
           leftSpeed = -0.16;
           rightSpeed = 0.16;
 
         }
-        if (m_timer.Get() >= 4.25_s && m_timer.Get() <= 5.15_s) {
+        if (m_timer.Get() >= 4.75_s && m_timer.Get() <= 5.65_s) {
           // stop roller after picked up second note
           wrist.SetControl(mmWrist.WithPosition(wrist::intake));
           intake.SetControl(intakeOut);
-          leftSpeed = 0.2;
-          rightSpeed = 0.2;
+          leftSpeed = 0.22;
+          rightSpeed = 0.22;
         }
-        if (m_timer.Get() >= 5.15_s && m_timer.Get() <= 6.1_s) {
-          leftSpeed = -0.23;
-          rightSpeed = -0.23;
+        if (m_timer.Get() >= 5.65_s && m_timer.Get() <= 6.6_s) {
+          leftSpeed = -0.25;
+          rightSpeed = -0.25;
         }
-        if (m_timer.Get() >= 5.5_s && m_timer.Get() <= 5.8_s) {
+        if (m_timer.Get() >= 6_s && m_timer.Get() <= 6.2_s) {
           intake.SetControl(phx::controls::StaticBrake{});
         }
-        if (m_timer.Get() >= 5.9_s && m_timer.Get() <= 6.8_s) {
+        if (m_timer.Get() >= 6.4_s && m_timer.Get() <= 7.25_s) {
           leftSpeed = 0.15;
           rightSpeed = -0.15;
         }
-        if (m_timer.Get() >= 6.8_s && m_timer.Get() <= 8.3_s) {
+        if (m_timer.Get() >= 7.3_s && m_timer.Get() <= 8.75_s) {
           leftSpeed = -0.1;
           rightSpeed = -0.1;
           arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2)); // should be dynamically calculated using arm angle
           wrist.SetControl(mmWrist.WithPosition(wrist::amp));
         }
-        if (m_timer.Get() >= 8.3_s && m_timer.Get() <= 8.75_s) {
+        if (m_timer.Get() >= 8.5_s && m_timer.Get() <= 9.25_s) {
           intake.SetControl(intakeOut);
         }
-        if (m_timer.Get() >= 8.75_s && m_timer.Get() <= 9.25_s) {
+        if (m_timer.Get() >= 9.25_s && m_timer.Get() <= 10_s) {
           arm.SetControl(mmArm.WithPosition(arm::home)); // untested ->.WithFeedForward(-0.2)); // should be dynamically calculated using arm angle
           wrist.SetControl(mmWrist.WithPosition(wrist::home));
           intake.SetControl(phx::controls::StaticBrake{});
@@ -687,12 +690,12 @@ void Robot::AutonomousPeriodic() {
           rightSpeed = -0.1;
           leftSpeed = -0.1;
         }
-        if (m_timer.Get() >= 0.6_s && m_timer.Get() <= 1.75_s) {
-          // turn left
-          leftSpeed = 0.1;
-          rightSpeed = -0.1;
+        if (m_timer.Get() >= 0.6_s && m_timer.Get() <= 1.35_s) {
+          // turn right
+          leftSpeed = 0.16;
+          rightSpeed = -0.16;
         }
-        if (m_timer.Get() >= 1.75_s && m_timer.Get() <= 2.5_s) {
+        if (m_timer.Get() >= 1.35_s && m_timer.Get() <= 2.45_s) {
           // drive towards amp
           leftSpeed = -0.1;
           rightSpeed = -0.1;
@@ -700,51 +703,56 @@ void Robot::AutonomousPeriodic() {
           arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2).WithFeedForward(0.2)); // should be dynamically calculated using arm angle
           wrist.SetControl(mmWrist.WithPosition(wrist::amp));
         }
-        if (m_timer.Get() >= 2.6_s && m_timer.Get() <= 3.0_s) {
+        if (m_timer.Get() >= 2.45_s && m_timer.Get() <= 2.95_s) {
           // spin intake to score
           intake.SetControl(intakeOut);
         }
-        if (m_timer.Get() >= 3.0_s && m_timer.Get() <= 5.5_s) {
+        if (m_timer.Get() >= 2.95_s && m_timer.Get() <= 3.45_s) {
           // stop intake after scored
           intake.SetControl(phx::controls::StaticBrake{});
-          // lower arm and wrist to home position
-          arm.SetControl(mmArm.WithPosition(arm::home));
-          wrist.SetControl(mmWrist.WithPosition(wrist::home));
-          // go to second note
-          leftSpeed = 0.12;
-          rightSpeed = -0.01;
+          // lower arm and wrist to intake position
+          arm.SetControl(mmArm.WithPosition(arm::intake));
+          wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+          // drive towards second note
+          leftSpeed = 0.28;
+          rightSpeed = 0.28;
         }
-        if (m_timer.Get() >= 5.25_s && m_timer.Get() <= 6.25_s) {
-          // pick up second note
-          intake.SetControl(intakeOut);
+        if (m_timer.Get() >= 3.45_s && m_timer.Get() <= 4.2_s) {
+          leftSpeed = 0.16;
+          rightSpeed = -0.16;
+
         }
-        if (m_timer.Get() >= 6.25_s && m_timer.Get() <= 6.5_s) {
+        if (m_timer.Get() >= 4.2_s && m_timer.Get() <= 5.1_s) {
           // stop roller after picked up second note
+          wrist.SetControl(mmWrist.WithPosition(wrist::intake));
+          intake.SetControl(intakeOut);
+          leftSpeed = 0.22;
+          rightSpeed = 0.22;
+        }
+        if (m_timer.Get() >= 5.1_s && m_timer.Get() <= 6.05_s) {
+          leftSpeed = -0.25;
+          rightSpeed = -0.25;
+        }
+        if (m_timer.Get() >= 5.45_s && m_timer.Get() <= 5.65_s) {
           intake.SetControl(phx::controls::StaticBrake{});
         }
-        if (m_timer.Get() >= 6.0_s && m_timer.Get() <= 8.75_s) {
-          // wrist and arm to home positon
-          arm.SetControl(mmArm.WithPosition(arm::home));
-          wrist.SetControl(mmWrist.WithPosition(wrist::home));
-          // drive to amp
-          leftSpeed = -0.11;
-          rightSpeed = 0.01;
+        if (m_timer.Get() >= 6.05_s && m_timer.Get() <= 6.9_s) {
+          leftSpeed = -0.16;
+          rightSpeed = 0.16;
         }
-        if (m_timer.Get() >= 8.75_s && m_timer.Get() <= 9.25_s) {
-          // bring arm and wrist up to amp position
-          arm.SetControl(mmArm.WithPosition(arm::amp));
+        if (m_timer.Get() >= 6.9_s && m_timer.Get() <= 8.35_s) {
+          leftSpeed = -0.1;
+          rightSpeed = -0.1;
+          arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2)); // should be dynamically calculated using arm angle
           wrist.SetControl(mmWrist.WithPosition(wrist::amp));
         }
-        if (m_timer.Get() >= 9.5_s && m_timer.Get() <= 10.0_s) {
-          // shoot second note
+        if (m_timer.Get() >= 8.35_s && m_timer.Get() <= 9.1_s) {
           intake.SetControl(intakeOut);
         }
-        if (m_timer.Get() >= 10.0_s && m_timer.Get() <= 10.5_s) {
-          // stop intake rollers
-          intake.SetControl(phx::controls::StaticBrake{});
-          // bring wrist and arm to home position
+        if (m_timer.Get() >= 9.1_s && m_timer.Get() <= 9.85_s) {
           arm.SetControl(mmArm.WithPosition(arm::home)); // untested ->.WithFeedForward(-0.2)); // should be dynamically calculated using arm angle
           wrist.SetControl(mmWrist.WithPosition(wrist::home));
+          intake.SetControl(phx::controls::StaticBrake{});
         }
 
       }
@@ -838,7 +846,14 @@ void Robot::AutonomousPeriodic() {
         }
       }
       else if (autonomousMode == 4) { // four note / don't use
-
+        if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.75_s) {
+          leftSpeed = 0.16;
+          rightSpeed = -0.16;
+        }
+        if (m_timer.Get() >= 0.75_s && m_timer.Get() <= 2_s) {
+          leftSpeed = 0.16;
+          rightSpeed = 0.16;
+        }
       }
       else if (autonomousMode == 5) { // don't move
         // no code

@@ -89,7 +89,7 @@ namespace wrist {
 	static constexpr rot shuttle{gearOut * deg{90}};
 }
 const bool sideOfField = true; // true is blue; false is red.
-const int autonomousMode = 1; // change for different autonomous mode;
+const int autonomousMode = 2; // change for different autonomous mode;
 /*
 0 for exit / go forward
 start just before line

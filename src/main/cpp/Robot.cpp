@@ -81,7 +81,7 @@ void Robot::RobotInit() {
   mmArmConf.MotionMagicExpo_kV = 0.12;
 
   armClimbConf = armConf;
-  armClimbConf.MotionMagic.MotionMagicCruiseVelocity = 5;
+  armClimbConf.MotionMagic.MotionMagicCruiseVelocity = 15;// was 5
 
   arm.GetConfigurator().Apply(armConf);
   armFollower.GetConfigurator().Apply(armConf);

@@ -262,12 +262,14 @@ void Robot::Mechanism() {
     switch (mechMode) {
 
       case Mech::Home :
+        arm.GetConfigurator().Apply(armConf);
         intake.SetControl(phx::controls::StaticBrake{});
         arm.SetControl(mmArm.WithPosition(arm::home)); // untested ->.WithFeedForward(-0.2)); // should be dynamically calculated using arm angle
         wrist.SetControl(mmWrist.WithPosition(wrist::home));
         break;
 
       case Mech::Intake :
+        arm.GetConfigurator().Apply(armConf);
         arm.SetControl(mmArm.WithPosition(arm::intake));
         wrist.SetControl(mmWrist.WithPosition(wrist::intake));
 //        if (!noteDetected && !armMoving && !wristMoving) {
@@ -281,6 +283,7 @@ void Robot::Mechanism() {
         break;
 
       case Mech::Delivery :
+        arm.GetConfigurator().Apply(armConf);
         arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2).WithFeedForward(0.2)); // should be dynamically calculated using arm angle
         wrist.SetControl(mmWrist.WithPosition(wrist::amp));
         break;
@@ -297,6 +300,7 @@ void Robot::Mechanism() {
         break;
 
       case Mech::Release :
+        arm.GetConfigurator().Apply(armConf);
         arm.SetControl(mmArm.WithPosition(arm::intake));
         wrist.SetControl(mmWrist.WithPosition(wrist::intake));
         if (!armMoving && !wristMoving) {
@@ -325,6 +329,7 @@ void Robot::Mechanism() {
         break;
 
       case Mech::Shuttle :
+        arm.GetConfigurator().Apply(armConf);
         arm.SetControl(mmArm.WithPosition(arm::home));
         wrist.SetControl(mmWrist.WithPosition(wrist::shuttle));
         if (!wristMoving and !armMoving) {

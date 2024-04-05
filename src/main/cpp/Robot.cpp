@@ -181,7 +181,7 @@ void Robot::TeleopPeriodic() {
    * eg speed = 0 -> speedTurn = turn
    *    speed = 1 -> speedTurn = 0.5 * turn
   */
-  double turn = (fabs(driveController.GetTwist()) > deadband) ? 0.5 * driveDirection * driveController.GetTwist() * fabs(driveController.GetTwist()) : 0.0;
+  double turn = (fabs(driveController.GetTwist()) > deadband) ? 0.3 * driveDirection * driveController.GetTwist() * fabs(driveController.GetTwist()) : 0.0;
   double speedTurn = turn * (1 + fabs(speed)/2);
 
   /**

@@ -68,6 +68,24 @@ class Robot : public frc::TimedRobot {
 
     int driveDirection = 1; // forward
 
+    frc::SendableChooser<std::string> m_chooser;
+    const std::string kAutoNoMove = "No Move";
+    const std::string kAutoLeave = "Leave";
+
+    const std::string kAutoOneNoteRed = "One Note Red";
+    const std::string kAutoTwoNoteRed = "Two Note Red";
+    const std::string kAutoThreeNoteRed = "Three Note Red";
+    const std::string kAutoFourNoteRed = "Four Note Red";
+
+    const std::string kAutoOneNoteBlue = "One Note Blue";
+    const std::string kAutoTwoNoteBlue = "Two Note Blue";
+    const std::string kAutoThreeNoteBlue = "Three Note Blue";
+    const std::string kAutoFourNoteBlue = "Four Note Blue";
+
+    std::string m_autoSelected;
+
+  
+
     /**
      * CONFIGURE ARM/WRIST MOTORS
     */

@@ -208,6 +208,10 @@ void Robot::TeleopPeriodic() {
   leftOut.Output = maxSpeed * (speed - speedTurn);
   rightOut.Output = maxSpeed * (speed + speedTurn); 
 
+  frc::SmartDashboard::PutNumber("Left Speed", leftOut.Output);
+  frc::SmartDashboard::PutNumber("Right Speed", rightOut.Output);
+ // frc::SmartDashboard::PutNumber("Arm Position", arm.GetPosition());
+
   leftDrive.SetControl(leftOut);
   rightDrive.SetControl(rightOut);
 

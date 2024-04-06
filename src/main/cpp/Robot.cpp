@@ -365,6 +365,7 @@ void Robot::AutonomousInit() {
   m_autoSelected = m_chooser.GetSelected();
   fmt::print("Auto selected: {}\n", m_autoSelected);
 
+  
   if (m_autoSelected == kAutoLeave) {  // exit / go forward code
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 2_s) {
       // drive forward
@@ -375,8 +376,8 @@ void Robot::AutonomousInit() {
   else if (m_autoSelected == kAutoOneNoteRed) { // one note red
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
       // drive forward
-      rightSpeed = -0.1;
-      leftSpeed = -0.1;
+      rightSpeed = -0.15;
+      leftSpeed = -0.15;
     }
     if (m_timer.Get() >= 0.6_s && m_timer.Get() <= 1.35_s) {
       // turn right
@@ -398,7 +399,7 @@ void Robot::AutonomousInit() {
     if (m_timer.Get() >= 2.95_s && m_timer.Get() <= 3.45_s) {
       // stop intake after scored
       intake.SetControl(phx::controls::StaticBrake{});
-      // lower arm and wrist to home position
+      // lower arm and wrist to intake position
       arm.SetControl(mmArm.WithPosition(arm::home));
       wrist.SetControl(mmWrist.WithPosition(wrist::home));
     }
@@ -479,7 +480,7 @@ void Robot::AutonomousInit() {
     }
 
 
-
+    
   }
   else if (m_autoSelected == kAutoThreeNoteRed) { // three note red
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
@@ -576,30 +577,30 @@ void Robot::AutonomousInit() {
   else if (m_autoSelected == kAutoOneNoteBlue) { // one note blue
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
       // drive forward
-      rightSpeed = -0.1;
-      leftSpeed = -0.1;
+      rightSpeed = -0.15;
+      leftSpeed = -0.15;
     }
-    if (m_timer.Get() >= 0.6_s && m_timer.Get() <= 1.75_s) {
-      // turn left
-      leftSpeed = 0.2;
-      rightSpeed = -0.2;
+    if (m_timer.Get() >= 0.6_s && m_timer.Get() <= 1.35_s) {
+      // turn right
+      leftSpeed = 0.21;
+      rightSpeed = -0.21;
     }
-    if (m_timer.Get() >= 1.75_s && m_timer.Get() <= 2.5_s) {
+    if (m_timer.Get() >= 1.35_s && m_timer.Get() <= 2.45_s) {
       // drive towards amp
-      leftSpeed = -0.1;
-      rightSpeed = -0.1;
+      leftSpeed = -0.12;
+      rightSpeed = -0.12;
       // raise arm to scoring position
       arm.SetControl(mmArm.WithPosition(arm::amp)); // untested ->.WithFeedForward(-0.2).WithFeedForward(0.2)); // should be dynamically calculated using arm angle
       wrist.SetControl(mmWrist.WithPosition(wrist::amp));
     }
-    if (m_timer.Get() >= 2.6_s && m_timer.Get() <= 3.0_s) {
+    if (m_timer.Get() >= 2.45_s && m_timer.Get() <= 2.95_s) {
       // spin intake to score
       intake.SetControl(intakeOut);
     }
-    if (m_timer.Get() >= 3.0_s && m_timer.Get() <= 5.5_s) {
+    if (m_timer.Get() >= 2.95_s && m_timer.Get() <= 3.45_s) {
       // stop intake after scored
       intake.SetControl(phx::controls::StaticBrake{});
-      // lower arm and wrist to home position
+      // lower arm and wrist to intake position
       arm.SetControl(mmArm.WithPosition(arm::home));
       wrist.SetControl(mmWrist.WithPosition(wrist::home));
     }
@@ -697,6 +698,8 @@ void Robot::AutonomousInit() {
   else { // shouldn't ever run, default to no movement
     // no code
   }
+
+  
 }
 
 void Robot::AutonomousPeriodic() {
@@ -707,7 +710,6 @@ void Robot::AutonomousPeriodic() {
   armMoving = arm.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   wristMoving = wrist.GetVelocity().GetValueAsDouble() != 0.0 ? true : false;
   noteDetected = noteSensor.Get();
-
 
 /*
   if (!sideOfField) {

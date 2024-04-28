@@ -19,19 +19,31 @@ namespace phx = ctre::phoenix6;
 */
 void Robot::RobotInit() {
 
-  frc::SmartDashboard::PutNumber("Auto mode", 0);
+//SmartDashboard configuration
 
-  m_chooser.SetDefaultOption(kAutoNoMove, kAutoNoMove);
-  m_chooser.AddOption(kAutoLeave, kAutoLeave);
-  m_chooser.AddOption(kAutoOneNoteRed, kAutoOneNoteRed);
-  m_chooser.AddOption(kAutoTwoNoteRed, kAutoTwoNoteRed);
-  m_chooser.AddOption(kAutoThreeNoteRed, kAutoThreeNoteRed);
-  m_chooser.AddOption(kAutoFourNoteRed, kAutoFourNoteRed);
-  m_chooser.AddOption(kAutoOneNoteBlue, kAutoOneNoteBlue);
-  m_chooser.AddOption(kAutoTwoNoteBlue, kAutoTwoNoteBlue);
-  m_chooser.AddOption(kAutoThreeNoteBlue, kAutoThreeNoteBlue);
-  m_chooser.AddOption(kAutoFourNoteBlue, kAutoFourNoteBlue);
-  frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
+
+  a_chooser.SetDefaultOption(kAutoNoMove, kAutoNoMove);
+  a_chooser.AddOption(kAutoLeave, kAutoLeave);
+  a_chooser.AddOption(kAutoOneNoteRed, kAutoOneNoteRed);
+  a_chooser.AddOption(kAutoTwoNoteRed, kAutoTwoNoteRed);
+  a_chooser.AddOption(kAutoThreeNoteRed, kAutoThreeNoteRed);
+  a_chooser.AddOption(kAutoFourNoteRed, kAutoFourNoteRed);
+  a_chooser.AddOption(kAutoOneNoteBlue, kAutoOneNoteBlue);
+  a_chooser.AddOption(kAutoTwoNoteBlue, kAutoTwoNoteBlue);
+  a_chooser.AddOption(kAutoThreeNoteBlue, kAutoThreeNoteBlue);
+  a_chooser.AddOption(kAutoFourNoteBlue, kAutoFourNoteBlue);
+  frc::SmartDashboard::PutData("Auto Mode", &a_chooser);
+
+  d_chooser.SetDefaultOption(kControllerDrive, kControllerDrive);
+  d_chooser.AddOption(kJoystickDrive, kJoystickDrive);
+  frc::SmartDashboard::PutData("Drive Modes", &d_chooser);
+
+  s_chooser.SetDefaultOption(kSpeedFull, kSpeedFull);
+  s_chooser.AddOption(kSpeedHalf, kSpeedHalf);
+  s_chooser.AddOption(kSpeedQuarter, kSpeedQuarter);
+  s_chooser.AddOption(kSpeedTenth, kSpeedTenth);
+  frc::SmartDashboard::PutData("Speed Modes", &s_chooser);
+
 
   frc::CameraServer::StartAutomaticCapture();
 
@@ -164,13 +176,18 @@ void Robot::DisabledPeriodic() {
 
 void Robot::TeleopPeriodic() {
   disabledTimer = 0_s;
+
+  d_driveTypeSelected = d_chooser.GetSelected();
+
+  s_driveSpeedSelected = s_chooser.GetSelected();
+
   /**
    * SLOW DRIVE
    * Button three on the joystick toggles slow drive mode which sets maxSpeed to 30% output
    * The robot's combined drive and turn speed are limited to the maxSpeed value.
   */
-  slowDrive = (driveController.GetRawButtonPressed(3)) ? !slowDrive : slowDrive;
-  maxSpeed = slowDrive ? 0.3 : 1.0;
+//  slowDrive = (driveController.GetRawButtonPressed(3)) ? !slowDrive : slowDrive;
+  maxSpeed = 1.0;
 
   /**
    * DRIVE DIRECTION
@@ -183,7 +200,7 @@ void Robot::TeleopPeriodic() {
    * jitter correction: throw out any inputs less than the deadband value
   */
   const double deadband = 0.05;
-  double speed = (fabs(driveController.GetY()) > deadband) ? driveDirection * driveController.GetY() : 0.0;
+//  double speed = (fabs(driveController.GetY()) > deadband) ? driveDirection * driveController.GetY() : 0.0;
   
   /**
    * TURNING
@@ -194,7 +211,42 @@ void Robot::TeleopPeriodic() {
    * eg speed = 0 -> speedTurn = turn
    *    speed = 1 -> speedTurn = 0.5 * turn
   */
-  double turn = (fabs(driveController.GetTwist()) > deadband) ? 0.3 * driveDirection * driveController.GetTwist() * fabs(driveController.GetTwist()) : 0.0;
+
+ // Controller Drive
+  double speedMultiplier;
+  double speed;
+  double turn;
+
+  if (s_driveSpeedSelected == kSpeedFull) { // Full Speed
+    speedMultiplier = 1;
+  }
+  else if (s_driveSpeedSelected == kSpeedHalf) { // Half Speed
+    speedMultiplier = 0.5;
+  }
+  else if (s_driveSpeedSelected == kSpeedQuarter) { // Quarter Speed
+    speedMultiplier = 0.25;
+  }
+  else if (s_driveSpeedSelected == kSpeedTenth) {
+    speedMultiplier = 0.1;
+  }
+  else { // Default to Full Speed
+    speedMultiplier = 1;
+  }
+
+
+  if (d_driveTypeSelected == kControllerDrive) {
+    speed = (fabs(mechController.GetLeftY()) > deadband) ? speedMultiplier * driveDirection * mechController.GetLeftY() : 0.0;
+    turn = (fabs(mechController.GetRightX()) > deadband) ? 0.3 * -driveDirection * mechController.GetRightX() * fabs(mechController.GetRightX()) : 0.0;
+  }
+  else if (d_driveTypeSelected == kJoystickDrive) { // Joystick drive
+    speed = (fabs(driveController.GetY()) > deadband) ? speedMultiplier * driveDirection * driveController.GetY() : 0.0;
+    turn = (fabs(driveController.GetTwist()) > deadband) ? 0.3 * -driveDirection * driveController.GetTwist() * fabs(driveController.GetTwist()) : 0.0;
+  }
+  else { // default to controller drive
+    speed = (fabs(mechController.GetLeftY()) > deadband) ? speedMultiplier * driveDirection * mechController.GetLeftY() : 0.0;
+    turn = (fabs(mechController.GetRightX()) > deadband) ? 0.3 * -driveDirection * mechController.GetRightX() * fabs(mechController.GetRightX()) : 0.0;  
+  }
+
   double speedTurn = turn * (1 + fabs(speed)/2);
 
   /**
@@ -366,18 +418,18 @@ void Robot::AutonomousInit() {
   m_timer.Start();
   double rightSpeed = 0.0;
   double leftSpeed = 0.0;
-  m_autoSelected = m_chooser.GetSelected();
-  fmt::print("Auto selected: {}\n", m_autoSelected);
+  a_autoSelected = a_chooser.GetSelected();
+  //fmt::print("Auto selected: {}\n", a_autoSelected);
 
   
-  if (m_autoSelected == kAutoLeave) {  // exit / go forward code
+  if (a_autoSelected == kAutoLeave) {  // exit / go forward code
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 2_s) {
       // drive forward
       rightSpeed = -0.1;
       leftSpeed = -0.1;
     }
   }
-  else if (m_autoSelected == kAutoOneNoteRed) { // one note red
+  else if (a_autoSelected == kAutoOneNoteRed) { // one note red
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
       // drive forward
       rightSpeed = -0.15;
@@ -408,7 +460,7 @@ void Robot::AutonomousInit() {
       wrist.SetControl(mmWrist.WithPosition(wrist::home));
     }
   }
-  else if (m_autoSelected == kAutoTwoNoteRed) { // two note red
+  else if (a_autoSelected == kAutoTwoNoteRed) { // two note red
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
       // drive forward
       rightSpeed = -0.15;
@@ -486,7 +538,7 @@ void Robot::AutonomousInit() {
 
     
   }
-  else if (m_autoSelected == kAutoThreeNoteRed) { // three note red
+  else if (a_autoSelected == kAutoThreeNoteRed) { // three note red
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
       // drive forward
       rightSpeed = -0.1;
@@ -575,10 +627,10 @@ void Robot::AutonomousInit() {
       intake.SetControl(intakeOut);
     }
   }
-  else if (m_autoSelected == kAutoFourNoteRed) { // four note red
+  else if (a_autoSelected == kAutoFourNoteRed) { // four note red
 
   }
-  else if (m_autoSelected == kAutoOneNoteBlue) { // one note blue
+  else if (a_autoSelected == kAutoOneNoteBlue) { // one note blue
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
       // drive forward
       rightSpeed = -0.15;
@@ -609,7 +661,7 @@ void Robot::AutonomousInit() {
       wrist.SetControl(mmWrist.WithPosition(wrist::home));
     }
   }
-  else if (m_autoSelected == kAutoTwoNoteBlue) { // two note blue
+  else if (a_autoSelected == kAutoTwoNoteBlue) { // two note blue
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
       // drive forward
       rightSpeed = -0.15;
@@ -690,13 +742,13 @@ void Robot::AutonomousInit() {
       intake.SetControl(phx::controls::StaticBrake{});
     }
   }
-  else if (m_autoSelected == kAutoThreeNoteBlue) { // three note blue
+  else if (a_autoSelected == kAutoThreeNoteBlue) { // three note blue
     // no code
   }
-  else if (m_autoSelected == kAutoFourNoteBlue) { // four note blue
+  else if (a_autoSelected == kAutoFourNoteBlue) { // four note blue
     // no code
   }
-  else if (m_autoSelected == kAutoNoMove) { // no move
+  else if (a_autoSelected == kAutoNoMove) { // no move
     // no code
   }
   else { // shouldn't ever run, default to no movement
@@ -787,14 +839,14 @@ void Robot::AutonomousPeriodic() {
   }
 */
 
-  if (m_autoSelected == kAutoLeave) {  // exit / go forward code
+  if (a_autoSelected == kAutoLeave) {  // exit / go forward code
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 2_s) {
       // drive forward
       rightSpeed = -0.1;
       leftSpeed = -0.1;
     }
   }
-  else if (m_autoSelected == kAutoOneNoteRed) { // one note red
+  else if (a_autoSelected == kAutoOneNoteRed) { // one note red
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
       // drive forward
       rightSpeed = -0.15;
@@ -825,7 +877,7 @@ void Robot::AutonomousPeriodic() {
       wrist.SetControl(mmWrist.WithPosition(wrist::home));
     }
   }
-  else if (m_autoSelected == kAutoTwoNoteRed) { // two note red
+  else if (a_autoSelected == kAutoTwoNoteRed) { // two note red
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
       // drive forward
       rightSpeed = -0.15;
@@ -903,7 +955,7 @@ void Robot::AutonomousPeriodic() {
 
     
   }
-  else if (m_autoSelected == kAutoThreeNoteRed) { // three note red
+  else if (a_autoSelected == kAutoThreeNoteRed) { // three note red
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
       // drive forward
       rightSpeed = -0.1;
@@ -992,10 +1044,10 @@ void Robot::AutonomousPeriodic() {
       intake.SetControl(intakeOut);
     }
   }
-  else if (m_autoSelected == kAutoFourNoteRed) { // four note red
+  else if (a_autoSelected == kAutoFourNoteRed) { // four note red
 
   }
-  else if (m_autoSelected == kAutoOneNoteBlue) { // one note blue
+  else if (a_autoSelected == kAutoOneNoteBlue) { // one note blue
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
       // drive forward
       rightSpeed = -0.15;
@@ -1026,7 +1078,7 @@ void Robot::AutonomousPeriodic() {
       wrist.SetControl(mmWrist.WithPosition(wrist::home));
     }
   }
-  else if (m_autoSelected == kAutoTwoNoteBlue) { // two note blue
+  else if (a_autoSelected == kAutoTwoNoteBlue) { // two note blue
     if (m_timer.Get() >= 0_s && m_timer.Get() <= 0.6_s) {
       // drive forward
       rightSpeed = -0.15;
@@ -1107,13 +1159,13 @@ void Robot::AutonomousPeriodic() {
       intake.SetControl(phx::controls::StaticBrake{});
     }
   }
-  else if (m_autoSelected == kAutoThreeNoteBlue) { // three note blue
+  else if (a_autoSelected == kAutoThreeNoteBlue) { // three note blue
     // no code
   }
-  else if (m_autoSelected == kAutoFourNoteBlue) { // four note blue
+  else if (a_autoSelected == kAutoFourNoteBlue) { // four note blue
     // no code
   }
-  else if (m_autoSelected == kAutoNoMove) { // no move
+  else if (a_autoSelected == kAutoNoMove) { // no move
     // no code
   }
   else { // shouldn't ever run, default to no movement

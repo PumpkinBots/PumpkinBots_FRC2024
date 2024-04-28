@@ -80,6 +80,7 @@ namespace arm {
 	static constexpr rot climbDown{gearOut * deg{25}}; // 25°
 }
 
+
 namespace wrist {
 	static constexpr double gearOut = 4*4*5 * 15/10; // gearIn is assumed 1, planetary gearbox is 3x5:1 (125:1), chain drive ratio is 15:10
 	static constexpr rot home{gearOut * deg{150}}; // 150°

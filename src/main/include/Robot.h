@@ -66,9 +66,9 @@ class Robot : public frc::TimedRobot {
     phx::controls::DutyCycleOut leftOut{0}; // Initialize output to 0%
     phx::controls::DutyCycleOut rightOut{0}; // Initialize output to 0%
 
-    int driveDirection = 1; // forward
+    int driveDirection = -1; // forward
 
-    frc::SendableChooser<std::string> m_chooser;
+    frc::SendableChooser<std::string> a_chooser;
     const std::string kAutoNoMove = "No Move";
     const std::string kAutoLeave = "Leave";
 
@@ -82,9 +82,21 @@ class Robot : public frc::TimedRobot {
     const std::string kAutoThreeNoteBlue = "Three Note Blue";
     const std::string kAutoFourNoteBlue = "Four Note Blue";
 
-    std::string m_autoSelected;
+    std::string a_autoSelected;
 
-  
+    frc::SendableChooser<std::string> d_chooser;
+    const std::string kJoystickDrive = "Joystick";
+    const std::string kControllerDrive = "Controller";  
+
+    std::string d_driveTypeSelected;
+
+    frc::SendableChooser<std::string> s_chooser;
+    const std::string kSpeedFull = "100%";
+    const std::string kSpeedHalf = "50%";
+    const std::string kSpeedQuarter = "25%";
+    const std::string kSpeedTenth = "10%";
+
+    std::string s_driveSpeedSelected;
 
     /**
      * CONFIGURE ARM/WRIST MOTORS

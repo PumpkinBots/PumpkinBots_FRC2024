@@ -80,6 +80,8 @@ void Robot::RobotInit() {
   mmArmConf.MotionMagicCruiseVelocity = 0; // max cruise velocity
   mmArmConf.MotionMagicExpo_kA = 0.01;
   mmArmConf.MotionMagicExpo_kV = 0.12;
+  //phx::configs::CurrentLimitsConfigs &cArmConf = armConf.CurrentLimits;
+  armConf.CurrentLimits.WithStatorCurrentLimit(40).WithSupplyTimeThreshold(1.275);
 
   arm.GetConfigurator().Apply(armConf);
   armFollower.GetConfigurator().Apply(armConf);
@@ -131,9 +133,9 @@ void Robot::RobotInit() {
 void Robot::DisabledPeriodic() {
   leftDrive.SetControl(phx::controls::NeutralOut{});
   rightDrive.SetControl(phx::controls::NeutralOut{});
-  Mechanism();
-  //arm.SetControl(phx::controls::StaticBrake{});
-  //wrist.SetControl(phx::controls::StaticBrake{});
+  //Mechanism();
+  arm.SetControl(phx::controls::StaticBrake{});
+  wrist.SetControl(phx::controls::StaticBrake{});
   intake.SetControl(phx::controls::NeutralOut{});
 }
 
@@ -187,12 +189,13 @@ void Robot::TeleopPeriodic() {
 
   /**
    * Robot starts in "home" position - arm down, and intake folded up, rollers locked
-   * A (force home or finish climb): returns all systems to home. If the hooks are on the chain, this is the final climb sequence.
+   * A (force home): returns all systems to home.
    * B (intake sequence): moves the wrist so the intake is ready to pick up a note, and spins rollers inward until a note is detected. Then stops the rollers, and returns to home.
    * X (release note): moves the wrist to deploy the intake, spins the rollers in reverse to "set down the note", and returns to home.
    * Y (climbing position): moves the arm up, but keeps the intake in home position to expose climbing hooks.
-   * L1 (scoring part 1): moves the arm up, and adjusts the wrist so it aligns with the amp.
-   * R1 (scoring part 2): spins intake motors to eject the note into the amp and returns to home
+   * Left Bumper (scoring part 1): moves the arm up, and adjusts the wrist so it aligns with the amp.
+   * Right Bumper (scoring part 2): spins intake motors to eject the note into the amp and returns to home.
+   * Left Stick (finish climb) : if the hooks are on the chain, this is the final climb sequence.
   */
 
   /**
@@ -338,24 +341,7 @@ void Robot::Mechanism() {
 
   if (!armMoving && !wristMoving) { // do nothing if the mechanism is still in motion
     switch (mechMode) {
-      /*
-      case Mech::Manual :
-        armSpeed = (fabs(mechController.GetRightY()) > deadband) ? mechController.GetRightY() : 0.0;
-        wristSpeed = (fabs(mechController.GetLeftY()) > deadband) ? mechController.GetLeftY() : 0.0;
-        armOut.Output = maxArmSpeed * armSpeed;
-        wristOut.Output = - maxArmSpeed * wristSpeed; // FIXME is the sign on this correct or should this be handled by 'inverted'
-        arm.SetControl(armOut);
-        wrist.SetControl(wristOut);
-
-        //DEBUG_MSG("Manual Mode: armOutput" << armOut.Output);
-        //DEBUG_MSG("Manual Mode: wristOutput " << wristOut.Output);
-
-        if (mechController.GetBackButton()) {
-          arm.SetPosition(arm::home);
-          wrist.SetPosition(wrist::home);
-        }
-        break;
-      */
+      
 
       case Mech::Home :
         intake.SetControl(phx::controls::StaticBrake{});
@@ -396,10 +382,11 @@ void Robot::Mechanism() {
         arm.SetControl(mmArm.WithPosition(arm::intake));
         wrist.SetControl(mmWrist.WithPosition(wrist::intake));
         if (!armMoving && !wristMoving) {
+          // conversely this could be done simply by intake.SetControl(-intakeOut) with a manual return to Mech::Home
           if (outputTimer == 0_s) {
             outputTimer = m_timer.Get();
             intake.SetInverted(!intake.GetInverted()); // reverse intake motors
-            intake.SetControl(intakeOut);
+            intake.SetControl(intakeOut); // may be unnecessary but doesn't hurt anything
           } else if (outputTimer + 1_s <= m_timer.Get()) { // modify delay for sufficient "eject" time as necessary
             outputTimer = 0_s;
             intake.SetInverted(!intake.GetInverted()); // revert to standard direction

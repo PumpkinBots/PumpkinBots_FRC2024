@@ -24,9 +24,11 @@
 */
 
 #include <units/angle.h>
+#include <ctre/phoenix6/TalonFX.hpp>
 
 using rot = units::angle::turn_t;
 using deg = units::angle::degree_t;
+namespace phx = ctre::phoenix6;
 
 namespace can {
 	static constexpr int leftDrive = 0;
@@ -72,6 +74,7 @@ namespace power {
 */
 namespace arm {
 	static constexpr double gearOut = 3*4*5 * 52/15;// gearIn is assumed 1, planetary gearbox is 3:1/4:1/5:1 (60:1),  chain drive ratio is 52:15
+	phx::configs::FeedbackConfigs::SensorToMechanismRatio &sensorToMech = gearOut; // this could be used to work in native degrees without an explicit gearOut conversion
 	static constexpr rot home{gearOut * deg{0}}; // 0°
 	static constexpr rot intake{gearOut * deg{0}}; // 0°
 	static constexpr rot amp{gearOut * deg{100}}; // 100°

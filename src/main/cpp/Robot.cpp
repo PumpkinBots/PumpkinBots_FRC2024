@@ -7,9 +7,11 @@
 
 //frc
 #include <frc/TimedRobot.h>
+#include <frc/shuffleboard/Shuffleboard.h>
+#include <frc/smartdashboard/SmartDashboard.h>
 
 //local
-#include <Robot.h>
+#include "Robot.h"
 #include <iostream>
 
 namespace phx = ctre::phoenix6;
@@ -18,9 +20,10 @@ namespace phx = ctre::phoenix6;
  * Runs once at code initialization.
 */
 void Robot::RobotInit() {
-
+  
 //SmartDashboard configuration
 
+  auto& settingsTab = frc::Shuffleboard::GetTab("Settings");
 
   a_chooser.SetDefaultOption(kAutoNoMove, kAutoNoMove);
   a_chooser.AddOption(kAutoLeave, kAutoLeave);
@@ -36,14 +39,18 @@ void Robot::RobotInit() {
 
   d_chooser.SetDefaultOption(kControllerDrive, kControllerDrive);
   d_chooser.AddOption(kJoystickDrive, kJoystickDrive);
-  frc::SmartDashboard::PutData("Drive Modes", &d_chooser);
+  frc::SmartDashboard::PutData("Drive Mode", &d_chooser);
 
   s_chooser.SetDefaultOption(kSpeedFull, kSpeedFull);
   s_chooser.AddOption(kSpeedHalf, kSpeedHalf);
   s_chooser.AddOption(kSpeedQuarter, kSpeedQuarter);
   s_chooser.AddOption(kSpeedTenth, kSpeedTenth);
-  frc::SmartDashboard::PutData("Speed Modes", &s_chooser);
+  frc::SmartDashboard::PutData("Speed Mode", &s_chooser);
 
+  settingsTab.Add("Auto Mode", a_chooser).WithSize(2, 1).WithPosition(0,0);
+  settingsTab.Add("Drive Mode", d_chooser).WithSize(2, 1).WithPosition(0,1);
+  settingsTab.Add("Speed Mode", s_chooser).WithSize(2, 1).WithPosition(0,2);
+  /* settingsTab.AddCamera("Camera Feed", "USB Camera 0", "").WithSize(8, 4).WithPosition(2, 0); */
 
   frc::CameraServer::StartAutomaticCapture();
 
